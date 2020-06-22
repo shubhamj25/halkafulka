@@ -1,0 +1,85 @@
+{
+  "project_info": {
+    "project_number": "285987441589",
+    "firebase_url": "https://halkafulka-221d3.firebaseio.com",
+    "project_id": "halkafulka-221d3",
+    "storage_bucket": "halkafulka-221d3.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:285987441589:android:aa8935b8cb795f5f2da7fc",
+        "android_client_info": {
+          "package_name": "com.example.halkaapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "285987441589-9hqfgeff1m51uodrj03d931a6rpq4tmi.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.halkaapp",
+            "certificate_hash": "421ba923262e539c94e834a5c5f74ded507639d6"
+          }
+        },
+        {
+          "client_id": "285987441589-v78vsuo7gqt793520qlip328qlkkta17.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBmzJP8YkSVKZidd1uq5dX9_ebPjdw-ABc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "285987441589-v78vsuo7gqt793520qlip328qlkkta17.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:285987441589:android:110afaa8b026bc7e2da7fc",
+        "android_client_info": {
+          "package_name": "com.example.halkaphulka1"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "285987441589-qtnghoeujmie75h0b7ag52vo8b2m5n7a.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.halkaphulka1",
+            "certificate_hash": "421ba923262e539c94e834a5c5f74ded507639d6"
+          }
+        },
+        {
+          "client_id": "285987441589-v78vsuo7gqt793520qlip328qlkkta17.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBmzJP8YkSVKZidd1uq5dX9_ebPjdw-ABc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "285987441589-v78vsuo7gqt793520qlip328qlkkta17.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
