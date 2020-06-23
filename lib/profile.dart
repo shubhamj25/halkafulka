@@ -42,7 +42,7 @@ class _ProfileState extends State<Profile> {
       },
       child: Scaffold(
         body: StreamBuilder(
-            stream: Firestore.instance.collection("users").document(widget.email).snapshots(),
+            stream: Firestore.instance.collection("users").document(widget.email.toString()).snapshots(),
             builder: (context, snapshot) {
               return snapshot.hasData?
               SingleChildScrollView(
@@ -156,7 +156,7 @@ class _ProfileState extends State<Profile> {
                                                 StreamBuilder(
                                                     stream: Firestore.instance.collection("users").document(loggedInEmail).snapshots(),
                                                     builder: (context, snap) {
-                                                      return AnimatedCount(count: !snap.hasData?0:23423, duration:  Duration(seconds: 4));
+                                                      return AnimatedCount(count: !snap.hasData?0:2342, duration:  Duration(seconds: 4));
                                                     }
                                                 ),
                                               ],

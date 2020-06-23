@@ -809,8 +809,8 @@ class _MyBottomNavigationBarState extends State<MyBottomNavigationBar> {
   Widget build(BuildContext context) {
     List<Widget> _children=[
       Homepage(),
+      Material(child: ImageCapture()),
       FavScreen(),
-      ImageCapture(),
       Profile(email: widget.username,rememberMe: widget.rememberMe,),
     ];
     return SafeArea(

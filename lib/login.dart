@@ -363,9 +363,18 @@ class _LoginState extends State<Login> {
 
                           loggedInPassword!=null&&loggedInEmail!=null?
                           Padding(
-                            padding: const EdgeInsets.symmetric(vertical:16.0,horizontal: 10.0),
-                            child: Text("You previously Signed in with $loggedInEmail.\nDo you want to Continue ?",textAlign: TextAlign.center
-                              ,style: GoogleFonts.poppins(fontSize: 20,color: Colors.white,),),
+                            padding: const EdgeInsets.symmetric(horizontal:6.0),
+                            child: Material(
+                              color: transBlue,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.only(topRight: Radius.circular(8),topLeft: Radius.circular(8)),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(vertical:16.0,horizontal: 16.0),
+                                child: Text("You previously Signed in with $loggedInEmail.\nDo you want to Continue ?",textAlign: TextAlign.center
+                                  ,style: GoogleFonts.poppins(fontSize: 16,color: Colors.white,),),
+                              ),
+                            ),
                           ):Container(),
 
 
@@ -630,7 +639,14 @@ void updateUserData(FirebaseUser user) async {
     }
     else
     {
-      return null;
+      DocumentReference ref = Firestore.instance.collection('users').document(user.email);
+      return ref.setData({
+        'uid': user.uid,
+        'email': user.email,
+        'photoURL': value.data['photoURL']==null?user.photoUrl:value.data['photoURL'],
+        'name': user.displayName,
+        'lastSeen': DateTime.now(),
+      }, merge: true);
     }
   });
 }

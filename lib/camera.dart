@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:toggle_switch/toggle_switch.dart';
@@ -40,7 +41,6 @@ class _ImageCaptureState extends State<ImageCapture> {
 
   File _cameraVideo;
   _pickVideoFromCamera() async {
-    // ignore: deprecated_member_use
     File video = await ImagePicker.pickVideo(source: ImageSource.camera);
     _cameraVideo = video;
     _cameraVideoPlayerController = VideoPlayerController.file(_cameraVideo)..initialize().then((_) {
@@ -72,29 +72,6 @@ class _ImageCaptureState extends State<ImageCapture> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: BottomAppBar(
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            photocapture?IconButton(
-              icon: Icon(Icons.photo_camera,size: MediaQuery.of(context).size.width*0.08,),
-              onPressed: ()=>_pickImage(ImageSource.camera),
-            ):Container(),
-            !photocapture?IconButton(
-              icon: Icon(Icons.videocam,size: MediaQuery.of(context).size.width*0.08,),
-              onPressed: ()=>_pickVideoFromCamera(),
-            ):Container(),
-            photocapture?IconButton(
-              icon: Icon(Icons.photo_library,size: MediaQuery.of(context).size.width*0.08),
-              onPressed: ()=>_pickImage(ImageSource.gallery),
-            ):Container(),
-            !photocapture?IconButton(
-              icon: Icon(Icons.video_library,size: MediaQuery.of(context).size.width*0.08),
-              onPressed: ()=>_pickVideo(),
-            ):Container(),
-          ],
-        ),
-      ),
       body: ListView(
         children: <Widget>[
           Column(
@@ -185,9 +162,33 @@ class _ImageCaptureState extends State<ImageCapture> {
           Stack(
             alignment: Alignment.bottomCenter,
             children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.only(top:80.0),
-                child: Text("Select Media From\nGallery", style: TextStyle(fontSize: MediaQuery.of(context).size.width*0.055,fontWeight: FontWeight.w700),textAlign: TextAlign.center,),
+              Column(
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.only(top:80.0),
+                    child: Text("Select Media From\nGallery", style: GoogleFonts.aBeeZee(fontSize: MediaQuery.of(context).size.width*0.055,fontWeight: FontWeight.w500),textAlign: TextAlign.center,),
+                  ),
+                  SizedBox(height: 50,),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: <Widget>[
+                      photocapture?IconButton(
+                        icon: Icon(Icons.photo_camera,size: MediaQuery.of(context).size.width*0.08,),
+                        onPressed: ()=>_pickImage(ImageSource.camera),
+                      ):IconButton(
+                        icon: Icon(Icons.videocam,size: MediaQuery.of(context).size.width*0.08,),
+                        onPressed: ()=>_pickVideoFromCamera(),
+                      ),
+                      photocapture?IconButton(
+                        icon: Icon(Icons.photo_library,size: MediaQuery.of(context).size.width*0.08),
+                        onPressed: ()=>_pickImage(ImageSource.gallery),
+                      ):IconButton(
+                        icon: Icon(Icons.video_library,size: MediaQuery.of(context).size.width*0.08),
+                        onPressed: ()=>_pickVideo(),
+                      )
+                    ],
+                  ),
+                ],
               ),
             ],
           ):Container(),
@@ -259,10 +260,13 @@ class _UploaderState extends State<Uploader> {
         },
       );
     }else{
-      return FlatButton.icon(
-        label:Text("Upload",style: TextStyle(color: Colors.black,fontSize: MediaQuery.of(context).size.width*0.05,fontWeight: FontWeight.w700),) ,
-        icon: Icon(Icons.cloud_upload) ,
-        onPressed: startUpload,
+      return Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: FlatButton.icon(
+          label:Text("Upload",style: GoogleFonts.balooBhai(color: Colors.black87,fontSize:18,),) ,
+          icon: Icon(Icons.cloud_upload,color: Colors.grey,) ,
+          onPressed: startUpload,
+        ),
       );
     }
 
