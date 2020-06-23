@@ -30,10 +30,10 @@ class Homepage extends StatefulWidget {
 }
 
 class _HomepageState extends State<Homepage> {
-  final _formKey = GlobalKey<FormState>();
+  //final _formKey = GlobalKey<FormState>();
   final searchFieldController=TextEditingController();
   final phoneFieldController=TextEditingController();
-  bool _obscureText = true;
+  //bool _obscureText = true;
   bool onsignupclick=false;
   bool onsubmit=false;
   double signupfieldopac=0.0;
@@ -44,7 +44,7 @@ class _HomepageState extends State<Homepage> {
   bool phonesignup=false;
   bool requestingotp=false;
   bool phoneregistered=true;
-  bool _autoValidate = false;
+  //bool _autoValidate = false;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -98,7 +98,7 @@ void share(BuildContext context,VideoCardDetails videoCardDetails){
 
 
 class VideoApp extends StatefulWidget {
-  VideoCardDetails videoCardDetails;
+  final VideoCardDetails videoCardDetails;
   VideoApp(this.videoCardDetails);
   @override
   _VideoAppState createState() => _VideoAppState();
@@ -106,7 +106,7 @@ class VideoApp extends StatefulWidget {
 
 class _VideoAppState extends State<VideoApp> {
   VideoPlayerController _controller;
-  final CommentController=TextEditingController();
+  final commentController=TextEditingController();
   bool favourite=false;
   final _formKey = GlobalKey<FormState>();
   final searchFieldController=TextEditingController();
@@ -273,7 +273,7 @@ class _VideoAppState extends State<VideoApp> {
                                             child: SizedBox(
                                               width: 230.0,
                                               child: TextFormField(
-                                                controller: CommentController,
+                                                controller: commentController,
                                                 style: TextStyle(fontSize: MediaQuery.of(context).size.width*0.045,color:Colors.black,fontWeight: FontWeight.w700),
                                                 decoration: InputDecoration(
                                                   labelText: "Comment",
@@ -281,7 +281,7 @@ class _VideoAppState extends State<VideoApp> {
                                                   suffixIcon: IconButton(icon:Icon(Icons.send,color: Colors.black,),
                                                     onPressed: (){
                                                       setState(() {
-                                                        String comment=CommentController.text;
+                                                        String comment=commentController.text;
                                                         Firestore.instance.collection("comments").document('${widget.videoCardDetails.id}_comments').get().then((doc){
                                                           if(doc.exists){
                                                             Firestore.instance.collection("comments").document('${widget.videoCardDetails.id}_comments').updateData({
@@ -294,7 +294,7 @@ class _VideoAppState extends State<VideoApp> {
                                                             });
                                                           }
                                                         });
-                                                        CommentController.clear();
+                                                        commentController.clear();
                                                       });
                                                     },),
                                                   border: InputBorder.none,
@@ -753,7 +753,7 @@ class _VideoAppState extends State<VideoApp> {
 
 
 class Comments extends StatefulWidget {
-  String comment;
+  final String comment;
   Comments(this.comment);
   @override
   _CommentsState createState() => _CommentsState();
@@ -789,10 +789,10 @@ class MyBottomNavigationBar extends StatefulWidget {
 }
 
 class _MyBottomNavigationBarState extends State<MyBottomNavigationBar> {
-  final _formKey = GlobalKey<FormState>();
+  //final _formKey = GlobalKey<FormState>();
   final searchFieldController=TextEditingController();
   final phoneFieldController=TextEditingController();
-  bool _obscureText = true;
+  //bool _obscureText = true;
   bool onsignupclick=false;
   bool onsubmit=false;
   double signupfieldopac=0.0;
@@ -803,7 +803,7 @@ class _MyBottomNavigationBarState extends State<MyBottomNavigationBar> {
   bool phonesignup=false;
   bool requestingotp=false;
   bool phoneregistered=true;
-  bool _autoValidate = false;
+  //bool _autoValidate = false;
   int _currentIndex=0;
   @override
   Widget build(BuildContext context) {

@@ -173,7 +173,7 @@ class _LoginState extends State<Login> {
   }
 
 
-  Widget _buildSignupBtn() {
+ /* Widget _buildSignupBtn() {
     return Stack(
       alignment: Alignment.topCenter,
       children: <Widget>[
@@ -194,7 +194,7 @@ class _LoginState extends State<Login> {
         ),
       ],
     );
-  }
+  }*/
   bool hidepass=true;
   @override
   Widget build(BuildContext context) {

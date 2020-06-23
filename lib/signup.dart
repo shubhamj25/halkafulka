@@ -5,8 +5,6 @@ import 'package:flutter_advanced_networkimage/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-
 import 'datetime_picker.dart';
 import 'login.dart';
 

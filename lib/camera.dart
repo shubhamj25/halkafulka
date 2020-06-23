@@ -20,6 +20,7 @@ class _ImageCaptureState extends State<ImageCapture> {
   VideoPlayerController  _cameraVideoPlayerController;
   File _imageFile;
   Future<void> _pickImage(ImageSource source) async {
+    // ignore: deprecated_member_use
     File selected=await ImagePicker.pickImage(source: source);
     setState(() {
       _imageFile=selected;
@@ -28,6 +29,7 @@ class _ImageCaptureState extends State<ImageCapture> {
 
   File _video;
   _pickVideo() async {
+    // ignore: deprecated_member_use
     File video = await ImagePicker.pickVideo(source: ImageSource.gallery);
     _video = video;
     _videoPlayerController = VideoPlayerController.file(_video)..initialize().then((_) {
@@ -38,6 +40,7 @@ class _ImageCaptureState extends State<ImageCapture> {
 
   File _cameraVideo;
   _pickVideoFromCamera() async {
+    // ignore: deprecated_member_use
     File video = await ImagePicker.pickVideo(source: ImageSource.camera);
     _cameraVideo = video;
     _cameraVideoPlayerController = VideoPlayerController.file(_cameraVideo)..initialize().then((_) {

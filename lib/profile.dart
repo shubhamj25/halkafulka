@@ -58,8 +58,8 @@ class _ProfileState extends State<Profile> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.start,
                                 children: <Widget>[
-                                  SizedBox(height: 40,),
-                                  Material(
+                                  SizedBox(height: 35,),
+                                  snapshot.data['photoURL']!=null?Material(
                                     shape: CircleBorder(),
                                     child: Container(
                                       alignment: Alignment.topCenter,
@@ -86,7 +86,7 @@ class _ProfileState extends State<Profile> {
                                           errorWidget: (context, url, error) => Icon(Icons.account_circle,size: 50,color: Colors.blueAccent,)
                                       ),
                                     ),
-                                  ),
+                                  ):Icon(Icons.account_circle,size: 60,color: Colors.blueAccent,),
                                   Container(height: 10,width: 2,color:Colors.blueAccent,),
                                   Container(
                                     width: 40,height: 40,
@@ -203,7 +203,11 @@ class _ProfileState extends State<Profile> {
                           padding: const EdgeInsets.only(top:8.0,right:8),
                           child: Align(
                             alignment: Alignment.topRight,
-                            child: IconButton(icon: Icon(Icons.settings,color: Colors.blueGrey,size: 30,),
+                            child: IconButton(icon:
+                            Icon(Icons.settings,color: Colors.blueGrey,size: 30,),
+                              onPressed: (){
+
+                              },
                             ),
                           ),
                         ),

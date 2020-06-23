@@ -15,10 +15,10 @@ class FavScreen extends StatefulWidget {
 }
 
 class _FavScreenState extends State<FavScreen> {
-  final _formKey = GlobalKey<FormState>();
+  //final _formKey = GlobalKey<FormState>();
   final searchFieldController=TextEditingController();
   final phoneFieldController=TextEditingController();
-  bool _obscureText = true;
+ // bool _obscureText = true;
   bool onsignupclick=false;
   bool onsubmit=false;
   double signupfieldopac=0.0;
@@ -29,7 +29,7 @@ class _FavScreenState extends State<FavScreen> {
   bool phonesignup=false;
   bool requestingotp=false;
   bool phoneregistered=true;
-  bool _autoValidate = false;
+  //bool _autoValidate = false;
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -63,6 +63,7 @@ class _FavScreenState extends State<FavScreen> {
                                   padding: const EdgeInsets.all(16.0),
                                   child: FloatingActionButton(
                                       backgroundColor: Colors.red,
+                                      onPressed: ()=>null,
                                       child: Icon(Icons.favorite,color: Colors.white,)),
                                 ),
                                 Text("Favourites",style: TextStyle(fontWeight: FontWeight.bold,fontSize:MediaQuery.of(context).size.width*0.08),),
@@ -113,7 +114,7 @@ class FavVideoCardDetails{
 }
 
 class FavouritesCard extends StatefulWidget {
-  FavVideoCardDetails favVideoCardDetails;
+  final FavVideoCardDetails favVideoCardDetails;
   FavouritesCard(this.favVideoCardDetails);
   @override
   _FavouritesCardState createState() => _FavouritesCardState();
@@ -121,12 +122,12 @@ class FavouritesCard extends StatefulWidget {
 
 class _FavouritesCardState extends State<FavouritesCard> {
   VideoPlayerController _controller;
-  final CommentController=TextEditingController();
+  final commentController=TextEditingController();
   bool favourite=false;
-  final _formKey = GlobalKey<FormState>();
+  //final _formKey = GlobalKey<FormState>();
   final searchFieldController=TextEditingController();
   final phoneFieldController=TextEditingController();
-  bool _obscureText = true;
+  //bool _obscureText = true;
   bool onsignupclick=false;
   bool onsubmit=false;
   double signupfieldopac=0.0;
@@ -137,7 +138,7 @@ class _FavouritesCardState extends State<FavouritesCard> {
   bool phonesignup=false;
   bool requestingotp=false;
   bool phoneregistered=true;
-  bool _autoValidate = false;
+  //bool _autoValidate = false;
   @override
   void initState() {
     super.initState();
@@ -311,7 +312,7 @@ class _FavouritesCardState extends State<FavouritesCard> {
                                                               child: SizedBox(
                                                                 width: MediaQuery.of(context).size.width*0.62,
                                                                 child: TextFormField(
-                                                                  controller: CommentController,
+                                                                  controller: commentController,
                                                                   style: TextStyle(fontSize:MediaQuery.of(context).size.width*0.038,color:Colors.black,fontWeight: FontWeight.w700),
                                                                   decoration: InputDecoration(
                                                                     labelText: "Comment",
@@ -319,7 +320,7 @@ class _FavouritesCardState extends State<FavouritesCard> {
                                                                     suffixIcon: IconButton(icon:Icon(Icons.send,color: Colors.black,),
                                                                       onPressed: (){
                                                                         setState(() {
-                                                                          String comment=CommentController.text;
+                                                                          String comment=commentController.text;
                                                                           Firestore.instance.collection("comments").document('${widget.favVideoCardDetails.id}_comments').get().then((doc){
                                                                             if(doc.exists){
                                                                               Firestore.instance.collection("comments").document('${widget.favVideoCardDetails.id}_comments').updateData({
@@ -332,7 +333,7 @@ class _FavouritesCardState extends State<FavouritesCard> {
                                                                               });
                                                                             }
                                                                           });
-                                                                          CommentController.clear();
+                                                                          commentController.clear();
                                                                         });
                                                                       },),
                                                                     border: InputBorder.none,
@@ -378,6 +379,7 @@ class _FavouritesCardState extends State<FavouritesCard> {
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: FloatingActionButton(
+                              onPressed: ()=>null,
                               heroTag: Timestamp.now().microsecondsSinceEpoch,
                               backgroundColor:Colors.white,
                               child: Icon(Icons.favorite,color: Colors.red,),
@@ -387,6 +389,7 @@ class _FavouritesCardState extends State<FavouritesCard> {
                           Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: FloatingActionButton(
+                              onPressed: ()=>null,
                               heroTag: Timestamp.now().microsecondsSinceEpoch,
                               child: Icon(Icons.share),
                             ),
