@@ -1,26 +1,23 @@
 import 'dart:convert';
-//import 'package:halkaapp/signup.dart';
+import 'package:flutter_advanced_networkimage/provider.dart';
+import 'package:flutter_facebook_login/flutter_facebook_login.dart';
+import 'package:halkaphulka1/signup.dart';
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-//import 'package:flutter_facebook_login/flutter_facebook_login.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-//import 'package:shared_preferences/shared_preferences.dart';
-//import 'customWidgets/custom_icons_icons.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 //import 'forgetPassword.dart';
-//import 'home.dart';
 import 'dart:async';
-
 import 'custom_icons_icons.dart';
+import 'forgotPass.dart';
 import 'home.dart';
 
 
-String loggedInEmail;
-String loggedInPassword;
-Color deepRed=Color.fromRGBO(253, 11, 23, 1);
+Color transBlue=Color.fromARGB(155, 0, 0, 80);
 bool _rememberMe = false;
 
 class Login extends StatefulWidget {
@@ -39,6 +36,21 @@ class _LoginState extends State<Login> {
   final _passwordController=TextEditingController();
   final GlobalKey<ScaffoldState> _scaffoldKey=new GlobalKey<ScaffoldState>();
   bool loggingin=false;
+  @override
+  void initState() {
+    super.initState();
+    globalVarInit();
+
+  }
+
+  globalVarInit() async{
+    prefs = await SharedPreferences.getInstance();
+    setState(() {
+      loggedInEmail = prefs.getString('loggedInEmail') ?? null;
+      loggedInPassword = prefs.getString('loggedInPassword') ?? null;
+    });
+  }
+
   Widget _buildSocialBtnRow() {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: 10.0,horizontal: 30),
@@ -54,7 +66,7 @@ class _LoginState extends State<Login> {
                     setState(() {
                       loggingin=true;
                     });
-                    //initiateFacebookLogin();
+                    initiateFacebookLogin();
                   },
                   child: Icon(CustomIcons.facebook_f,color: Colors.white,)),
             ),
@@ -92,7 +104,7 @@ class _LoginState extends State<Login> {
               child: FloatingActionButton(
                 backgroundColor: Colors.white,
                 onPressed: (){
-                 // Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => NewSinup()));
+                 Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => SignupScreen()));
                 },
                 heroTag: 449,
                 child: Icon(Icons.group_add,color: deepRed,),
@@ -103,7 +115,7 @@ class _LoginState extends State<Login> {
     );
   }
 
-  /*void initiateFacebookLogin() async {
+  void initiateFacebookLogin() async {
     var facebookLoginResult =
     await facebookLogin.logIn(['email']);
     switch (facebookLoginResult.status) {
@@ -127,42 +139,37 @@ class _LoginState extends State<Login> {
         onLoginStatusChanged(true, profileData: profile);
         break;
     }
-  }*/
+  }
 
-  void onLoginStatusChanged(bool isLoggedIn,{Map<String,dynamic> profileData}) {
-    setState(() {
+  Future<void> onLoginStatusChanged(bool isLoggedIn,{Map<String,dynamic> profileData}) async {
       if(isLoggedIn){
-        setState(() async {
+        setState((){
           loggedInEmail=profileData['email'];
-          // final prefs = await SharedPreferences.getInstance();
-          //prefs.setString('loggedInEmail', loggedInEmail);
         });
-        Firestore.instance.collection("users").document("${profileData['email']}").get().then((doc){
+        final prefs = await SharedPreferences.getInstance();
+        prefs.setString('loggedInEmail', loggedInEmail);
+        Firestore.instance.collection("users").document("${profileData['email']}").get().then((doc) async {
           if(doc.exists){
-           // Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context){return MyBottomNavigationBar(username: profileData['email'],rememberMe:_rememberMe);}));
+            Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context){return MyBottomNavigationBar(username: profileData['email'],rememberMe:_rememberMe);}));
           }
           else{
             setState(() async {
               loggedInEmail=profileData['email'];
-              // final prefs = await SharedPreferences.getInstance();
-              //prefs.setString('loggedInEmail', loggedInEmail);
             });
+            final prefs = await SharedPreferences.getInstance();
+            prefs.setString('loggedInEmail', loggedInEmail);
             Firestore.instance.collection("users").document("${profileData['email']}").setData({
               "uid":profileData['access_token'],
               "name":profileData['name'],
               "email":profileData['email'],
               "photoURL":profileData['picture'],
-              "password":"oshoaashrams",
-              "walletBalance":0,
-              "activated":false,
-              "organizer":false,
+              "password":"hf@${DateTime.now().millisecond}",
             },merge: true);
-            //Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context){return MyBottomNavigationBar(username: profileData['email'],rememberMe:_rememberMe);}));
+            Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context){return MyBottomNavigationBar(username: profileData['email'],rememberMe:_rememberMe);}));
           }
         });
       }
-      loggingin=false;
-    });
+
   }
 
 
@@ -178,7 +185,7 @@ class _LoginState extends State<Login> {
               onPressed: (){
                // Navigator.of(context).push(MaterialPageRoute(builder: (BuildContext context) => NewSinup()));
               },
-              heroTag: 449,
+              heroTag: 649,
               icon: Icon(Icons.group_add,color: deepRed,),
               label: Padding(
                 padding: const EdgeInsets.symmetric(horizontal:10.0,vertical: 3.0),
@@ -207,8 +214,9 @@ class _LoginState extends State<Login> {
                         decoration: BoxDecoration(
                           image: DecorationImage(
                             fit: BoxFit.fill,
-                            image: NetworkImage(
+                            image: AdvancedNetworkImage(
                                 "https://firebasestorage.googleapis.com/v0/b/halkafulka-221d3.appspot.com/o/forest.jpg?alt=media&token=a9501dab-0169-42bb-9af2-9e8e2b9b54fc"
+                                ,useDiskCache: true
                             ),
                           ),
                         )
@@ -252,13 +260,13 @@ class _LoginState extends State<Login> {
                                   color: Color.fromARGB(155, 0, 0, 80),
                                   borderRadius: BorderRadius.only(topRight: Radius.circular(8),topLeft: Radius.circular(8)),
                                 ),
-                                width: MediaQuery.of(context).size.width*0.69,
+                                width: MediaQuery.of(context).size.width*0.75,
                                 alignment: Alignment.centerLeft,
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: <Widget>[
                                     Container(
-                                      width:MediaQuery.of(context).size.width*0.55,
+                                      width:MediaQuery.of(context).size.width*0.6,
                                       child: TextFormField(
                                         validator:(String value){
                                           Pattern pattern =
@@ -275,11 +283,11 @@ class _LoginState extends State<Login> {
                                         cursorColor: Colors.white,
                                         controller: _emailController,
                                         keyboardType: TextInputType.emailAddress,
-                                        style: GoogleFonts.waitingForTheSunrise(fontSize: 16,fontWeight:FontWeight.bold,color: Colors.white),
+                                        style: GoogleFonts.aBeeZee(fontSize: 16,color: Colors.white),
                                         decoration: InputDecoration(
                                             errorMaxLines: 2,
                                             errorStyle: GoogleFonts.balooBhaina(color: Colors.white),
-                                            hintStyle: GoogleFonts.waitingForTheSunrise(fontSize: 16,fontWeight:FontWeight.bold,color: Colors.white),
+                                            hintStyle: GoogleFonts.aBeeZee(fontSize: 16,color: Colors.white),
                                             contentPadding: const EdgeInsets.symmetric(horizontal:14.0,vertical: 8.0),
                                             border: InputBorder.none,
                                             hintText: 'Email'
@@ -304,18 +312,18 @@ class _LoginState extends State<Login> {
                                 decoration: BoxDecoration(
                                   color: Color.fromARGB(155, 0, 0, 80),
                                 ),
-                                width: MediaQuery.of(context).size.width*0.69,
+                                width: MediaQuery.of(context).size.width*0.75,
                                 alignment: Alignment.centerLeft,
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: <Widget>[
                                     Container(
-                                      width: MediaQuery.of(context).size.width*0.55,
+                                      width: MediaQuery.of(context).size.width*0.6,
                                       child: TextFormField(
                                         cursorColor: Colors.white,
                                         controller: _passwordController,
                                         obscureText: hidepass,
-                                        style: GoogleFonts.waitingForTheSunrise(fontSize: 16,fontWeight:FontWeight.bold,color: Colors.white),
+                                        style: GoogleFonts.aBeeZee(fontSize: 16,color: Colors.white),
                                         validator:(String value){
                                           if(value==""||value==null){
                                             return "Empty Password";
@@ -327,7 +335,7 @@ class _LoginState extends State<Login> {
                                         onChanged: (val)=>_formKey.currentState.validate(),
                                         decoration: InputDecoration(
                                           errorMaxLines: 2,
-                                          hintStyle: GoogleFonts.waitingForTheSunrise(fontSize: 16,fontWeight:FontWeight.bold,color: Colors.white),
+                                          hintStyle: GoogleFonts.aBeeZee(fontSize: 16,color: Colors.white),
                                           errorStyle: GoogleFonts.balooBhaina(color: Colors.white),
                                           contentPadding: const EdgeInsets.symmetric(horizontal:14.0,vertical: 8.0),
                                           border: InputBorder.none,
@@ -355,15 +363,15 @@ class _LoginState extends State<Login> {
 
                           loggedInPassword!=null&&loggedInEmail!=null?
                           Padding(
-                            padding: const EdgeInsets.all(16.0),
+                            padding: const EdgeInsets.symmetric(vertical:16.0,horizontal: 10.0),
                             child: Text("You previously Signed in with $loggedInEmail.\nDo you want to Continue ?",textAlign: TextAlign.center
-                              ,style: GoogleFonts.balooBhai(fontSize: 20,color: Colors.white,),),
+                              ,style: GoogleFonts.poppins(fontSize: 20,color: Colors.white,),),
                           ):Container(),
 
 
                           SizedBox(height: 2,),
                           Container(
-                            width: MediaQuery.of(context).size.width*0.69,
+                            width: MediaQuery.of(context).size.width*0.75,
                             child: FlatButton(
                               onPressed: () {
                                 setState(() {
@@ -374,7 +382,7 @@ class _LoginState extends State<Login> {
                                   Firestore.instance.collection("users").document("$loggedInEmail").get().then((doc){
                                     if(doc.exists){
                                       if(loggedInPassword==doc.data['password']){
-                                      //  Navigator.pushReplacement(context, MaterialPageRoute(builder:(context){return MyBottomNavigationBar(username:loggedInEmail,rememberMe:_rememberMe);}));
+                                        Navigator.pushReplacement(context, MaterialPageRoute(builder:(context){return MyBottomNavigationBar(username:loggedInEmail,rememberMe:_rememberMe);}));
                                       }else{
                                         _scaffoldKey.currentState.showSnackBar(SnackBar(backgroundColor: Colors.red,content: Row(
                                           children: <Widget>[
@@ -401,13 +409,13 @@ class _LoginState extends State<Login> {
                                     Firestore.instance.collection("users").document("${_emailController.text.trim()}").get().then((doc){
                                       if(doc.exists){
                                         if(_passwordController.text.trim()==doc.data['password']){
-                                         /* Navigator.pushReplacement(context, MaterialPageRoute(builder:(context){return MyBottomNavigationBar(username: _emailController.text.trim(),rememberMe:_rememberMe);})).then((value) async {
+                                         Navigator.pushReplacement(context, MaterialPageRoute(builder:(context){return MyBottomNavigationBar(username: _emailController.text.trim(),rememberMe:_rememberMe);})).then((value) async {
                                             loggedInEmail=_emailController.text.trim();
                                             loggedInPassword=_passwordController.text;
-                                            // final prefs = await SharedPreferences.getInstance();
-                                            //prefs.setString('loggedInEmail', _emailController.text.trim());
-                                            //prefs.setString('loggedInPassword', _passwordController.text);
-                                          });*/
+                                            final prefs = await SharedPreferences.getInstance();
+                                            prefs.setString('loggedInEmail', _emailController.text.trim());
+                                            prefs.setString('loggedInPassword', _passwordController.text);
+                                          });
 
                                         }else{
                                           _scaffoldKey.currentState.showSnackBar(SnackBar(backgroundColor: Colors.red,content: Row(
@@ -466,12 +474,12 @@ class _LoginState extends State<Login> {
                             alignment: Alignment.centerLeft,
                             child: FlatButton(
                               onPressed: () {
-                               // Navigator.of(context).push(new MaterialPageRoute(builder: (BuildContext context) => ForgetPassword()));
+                               Navigator.of(context).push(new MaterialPageRoute(builder: (BuildContext context) => ForgetPassword()));
                               },
                               padding: EdgeInsets.only(left: 22.0),
                               child: Text(
                                 'Forgot Password?',
-                                style: GoogleFonts.waitingForTheSunrise(fontWeight: FontWeight.bold,color: Colors.white,fontSize: 20),
+                                style: GoogleFonts.poppins(fontWeight: FontWeight.bold,color: Colors.white,fontSize: 18),
                               ),
                             ),
                           ):Container(),
@@ -499,14 +507,14 @@ class _LoginState extends State<Login> {
                                   ),
                                   Text(
                                     'Remember me',
-                                    style: GoogleFonts.waitingForTheSunrise(fontWeight: FontWeight.bold,color: Colors.white,fontSize: 18),
+                                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold,color: Colors.white,fontSize: 18),
                                   ),
                                 ],
                               ),
                             ),
                           ),
 
-                          SizedBox(height: MediaQuery.of(context).size.height*0.15,),
+                          SizedBox(height: MediaQuery.of(context).size.height*0.1,),
                           _buildSocialBtnRow(),
                         ],
                       ),
@@ -572,7 +580,7 @@ final kBoxDecorationStyle = BoxDecoration(
 
 final FirebaseAuth _auth = FirebaseAuth.instance;
 final GoogleSignIn googleSignIn = GoogleSignIn();
-//var facebookLogin = FacebookLogin();
+var facebookLogin = FacebookLogin();
 Future<String> signInWithGoogle() async {
   final GoogleSignInAccount googleSignInAccount = await googleSignIn.signIn();
   final GoogleSignInAuthentication googleSignInAuthentication =
@@ -599,22 +607,21 @@ Future<String> signInWithGoogle() async {
 void signOutGoogle() async{
   await googleSignIn.signOut();
   loggedInEmail="";
-  //final prefs = await SharedPreferences.getInstance();
-  //prefs.remove('loggedInEmail');
+  final prefs = await SharedPreferences.getInstance();
+  prefs.remove('loggedInEmail');
 }
 
 
 void updateUserData(FirebaseUser user) async {
   loggedInEmail=user.email;
-  //final prefs = await SharedPreferences.getInstance();
-  //prefs.setString('loggedInEmail', loggedInEmail);
+  final prefs = await SharedPreferences.getInstance();
+  prefs.setString('loggedInEmail', loggedInEmail);
   Firestore.instance.collection("users").document(user.email).get().then((value){
     if(!value.exists){
       DocumentReference ref = Firestore.instance.collection('users').document(user.email);
       return ref.setData({
         'uid': user.uid,
         'email': user.email,
-        'phone':user.phoneNumber,
         'photoURL': user.photoUrl,
         'name': user.displayName,
         'lastSeen': DateTime.now(),

@@ -39,6 +39,11 @@ dependencies:
   progress_indicators:
   share:
   video_player:
+  flutter_facebook_login: ^3.0.0
+  cached_network_image:
+  shared_preferences:
+  flutter_advanced_networkimage: ^0.7.0
+  flushbar:
   firebase_storage:
   image_picker:
   image_cropper:
