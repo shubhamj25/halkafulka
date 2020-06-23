@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:halkaphulka1/custom_icons_icons.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:toggle_switch/toggle_switch.dart';
@@ -11,6 +12,9 @@ import 'package:video_player/video_player.dart';
 
 import 'home.dart';
 Map<String, dynamic> currentpost = {'title': null, 'caption': null};
+File _imageFile;
+File _video;
+File _cameraVideo;
 class ImageCapture extends StatefulWidget {
   @override
   _ImageCaptureState createState() => _ImageCaptureState();
@@ -19,16 +23,20 @@ class ImageCapture extends StatefulWidget {
 class _ImageCaptureState extends State<ImageCapture> {
   VideoPlayerController  _videoPlayerController;
   VideoPlayerController  _cameraVideoPlayerController;
-  File _imageFile;
+
   Future<void> _pickImage(ImageSource source) async {
     // ignore: deprecated_member_use
-    File selected=await ImagePicker.pickImage(source: source);
+    File selected=await ImagePicker.pickImage(source: source).then((filepath) {
+      return ImageCropper.cropImage(sourcePath: filepath.path,androidUiSettings:AndroidUiSettings(
+        initAspectRatio: CropAspectRatioPreset.square,
+      ), );
+    });
     setState(() {
       _imageFile=selected;
     });
   }
 
-  File _video;
+
   _pickVideo() async {
     // ignore: deprecated_member_use
     File video = await ImagePicker.pickVideo(source: ImageSource.gallery);
@@ -39,7 +47,7 @@ class _ImageCaptureState extends State<ImageCapture> {
     });
   }
 
-  File _cameraVideo;
+
   _pickVideoFromCamera() async {
     File video = await ImagePicker.pickVideo(source: ImageSource.camera);
     _cameraVideo = video;
@@ -63,6 +71,7 @@ class _ImageCaptureState extends State<ImageCapture> {
 
 
   bool photocapture=true;
+
   void clear(){
     setState(() {
       _imageFile=null;
@@ -70,12 +79,81 @@ class _ImageCaptureState extends State<ImageCapture> {
     });
   }
   @override
+  void initState() {
+    // TODO: implement initState
+    _imageFile=null;
+    _video=null;
+    _cameraVideo=null;
+    super.initState();
+  }
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: ListView(
         children: <Widget>[
-          Column(
+          Stack(
             children: <Widget>[
+              _imageFile!=null?Column(
+                children: <Widget>[
+                  Container(
+                    height: 400,
+                    child: Image.file(_imageFile,
+                      fit: BoxFit.fill,
+                    ),
+
+                  ),
+
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: <Widget>[
+                      FlatButton.icon(icon: Icon(Icons.crop),onPressed:_cropImage,label: Text("Crop",style: GoogleFonts.balooBhai(),),),
+                      FlatButton.icon(icon: Icon(Icons.refresh),onPressed: clear,label: Text("Clear",style: GoogleFonts.balooBhai())),
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Uploader(file:_imageFile),
+                  ),
+                ],
+              ):Container(),
+
+              _video!=null ?Column(
+                children: <Widget>[
+                  _videoPlayerController.value.initialized
+                      ? AspectRatio(
+                    aspectRatio: _videoPlayerController.value.aspectRatio,
+                    child: VideoPlayer(_videoPlayerController),
+                  )
+                      : Container(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: <Widget>[
+                      FlatButton.icon(icon: Icon(Icons.refresh),onPressed: clear,label: Text("Refresh",style: GoogleFonts.balooBhai(),),),
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: VideoUploader(file:_video),
+                  ),
+                ],
+              ):Container(),
+
+              _cameraVideo!=null?
+              Column(
+                children: <Widget>[
+                  _videoPlayerController.value.initialized
+                      ? AspectRatio(
+                    aspectRatio: _videoPlayerController.value.aspectRatio,
+                    child: VideoPlayer(_videoPlayerController),
+                  )
+                      : Container(),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: VideoUploader(file:_cameraVideo),
+                  ),
+                ],
+              ):Container(),
+
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal:84.0,vertical: 8.0),
                 child: ToggleSwitch(
@@ -101,63 +179,6 @@ class _ImageCaptureState extends State<ImageCapture> {
               ),
             ],
           ),
-          _imageFile!=null?Column(
-            children: <Widget>[
-              Image.file(_imageFile),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: <Widget>[
-                  FlatButton(child: Icon(Icons.crop),onPressed:_cropImage,),
-                  FlatButton(child: Icon(Icons.refresh),onPressed: clear),
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Uploader(file:_imageFile),
-              ),
-            ],
-          ):Container(),
-
-          _video!=null ?Column(
-            children: <Widget>[
-              _videoPlayerController.value.initialized
-                  ? AspectRatio(
-                aspectRatio: _videoPlayerController.value.aspectRatio,
-                child: VideoPlayer(_videoPlayerController),
-              )
-                  : Container(),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: <Widget>[
-                  FlatButton(child: Icon(Icons.refresh),onPressed: clear),
-                ],
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: VideoUploader(file:_video),
-              ),
-            ],
-          ):Container(),
-
-          _cameraVideo!=null?
-          Column(
-            children: <Widget>[
-              _videoPlayerController.value.initialized
-                  ? AspectRatio(
-                aspectRatio: _videoPlayerController.value.aspectRatio,
-                child: VideoPlayer(_videoPlayerController),
-              )
-                  : Container(),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: VideoUploader(file:_cameraVideo),
-              ),
-            ],
-          ):Container(),
-
-
-
           _video==null&&_imageFile==null?
           Stack(
             alignment: Alignment.bottomCenter,
@@ -226,7 +247,7 @@ class _UploaderState extends State<Uploader> {
           return Column(
             children: <Widget>[
               _task.isComplete?
-              Text("Upload Complete!",style: TextStyle(color: Colors.black,fontSize: MediaQuery.of(context).size.width*0.05,fontWeight: FontWeight.w700),):Container(),
+              Text("Upload Complete!",style: GoogleFonts.aBeeZee(color: Colors.black,fontSize: MediaQuery.of(context).size.width*0.05,fontWeight: FontWeight.w700),):Container(),
               _task.isPaused?
               FloatingActionButton(
                 heroTag: 1,
@@ -240,12 +261,15 @@ class _UploaderState extends State<Uploader> {
                 onPressed: ()=>_task.isPaused,
               ):Container(),
               Center(
-                child: Text(
-                  "${(progressPercent*100).toStringAsFixed(2)}%",
-                  style: TextStyle(
-                    color: Colors.lightBlueAccent,
-                    fontSize: 20.0,
-                    fontWeight: FontWeight.bold,
+                child: Padding(
+                  padding: const EdgeInsets.all(3.0),
+                  child: Text(
+                    "${(progressPercent*100).toStringAsFixed(2)}%",
+                    style: GoogleFonts.aBeeZee(
+                      color: Colors.lightBlueAccent,
+                      fontSize: 20.0,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -286,7 +310,7 @@ class VideoUploader extends StatefulWidget {
 
 class _VideoUploaderState extends State<VideoUploader> {
   final _formKey = GlobalKey<FormState>();
-  final FirebaseStorage _storage=FirebaseStorage(storageBucket: "gs://counsel-c7678.appspot.com");
+  final FirebaseStorage _storage=FirebaseStorage(storageBucket: "gs://halkafulka-221d3.appspot.com/");
   StorageUploadTask _task;
   Future<void> startUpload() async {
     setState(() {
@@ -303,7 +327,7 @@ class _VideoUploaderState extends State<VideoUploader> {
       'id':"${DateTime.now().toIso8601String()}",
       'title':currentpost['title'],
       'subpara':currentpost['caption'],
-      'postedby':formData['username'],
+      'postedby':loggedInEmail,
       'likes':0,
       'link':url
     });
@@ -311,6 +335,29 @@ class _VideoUploaderState extends State<VideoUploader> {
   bool emptyfields=false;
   final _titleController=TextEditingController();
   final _captionController=TextEditingController();
+  FocusNode myFocusNode;
+
+  @override
+  void initState() {
+    super.initState();
+
+    myFocusNode = FocusNode();
+  }
+
+  @override
+  void dispose() {
+    // Clean up the focus node when the Form is disposed.
+    myFocusNode.dispose();
+
+    super.dispose();
+  }
+
+  void clear(){
+    setState(() {
+      _imageFile=null;
+      _video=null;
+    });
+  }
   @override
   Widget build(BuildContext context) {
     if(_task!=null){
@@ -323,7 +370,7 @@ class _VideoUploaderState extends State<VideoUploader> {
           return Column(
             children: <Widget>[
               _task.isComplete?
-              Text("Upload Complete!",style: TextStyle(color: Colors.black,fontSize: MediaQuery.of(context).size.width*0.05,fontWeight: FontWeight.w700),):Container(),
+              Text("Upload Complete!",style: GoogleFonts.aBeeZee(color: Colors.black,fontSize: MediaQuery.of(context).size.width*0.05,fontWeight: FontWeight.w700),):Container(),
               _task.isPaused?
               FloatingActionButton(
                 heroTag: 1,
@@ -339,10 +386,9 @@ class _VideoUploaderState extends State<VideoUploader> {
               Center(
                 child: Text(
                   "${(progressPercent*100).toStringAsFixed(2)}%",
-                  style: TextStyle(
+                  style: GoogleFonts.balooBhai(
                     color: Colors.lightBlueAccent,
                     fontSize: 20.0,
-                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
@@ -352,75 +398,110 @@ class _VideoUploaderState extends State<VideoUploader> {
                   backgroundColor: Colors.white,
                   value:progressPercent,
                 ),
-              ),],
+              ),
+
+            ],
           );
         },
       );
     }else{
-      return Column(
-        children: <Widget>[
-          Form(
-            key: _formKey,
-            child:Column(
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.only(top:9.0,bottom:5.0),
-                  child: Material(
-                    elevation: 5.0,
-                    borderRadius: BorderRadius.all(Radius.circular(5.0)),
-                    child: TextFormField(
-                      controller: _titleController,
-                      style: TextStyle(fontSize: MediaQuery.of(context).size.width*0.04,color:Colors.black,fontWeight: FontWeight.w700),
-                      onSaved: (var value){
-                        setState(() {
-                          currentpost['title']=value;
-                        });
-                      },
-                      decoration: InputDecoration(
-                        labelText: "Title",
-                        contentPadding: EdgeInsets.symmetric(horizontal: 15.0,vertical: 8.0),
-                        suffixIcon: !emptyfields ? Icon(Icons.title,color: Colors.black,):Icon(Icons.error,color: Colors.red,),
-                        border: InputBorder.none,
-                      ),
-
+      return InkWell(
+        onTap: (){
+          myFocusNode.unfocus();
+        },
+        child: Column(
+          children: <Widget>[
+            Form(
+              key: _formKey,
+              child:Column(
+                children: <Widget>[
+                  TextFormField(
+                    controller: _titleController,
+                    style: GoogleFonts.aBeeZee(fontSize: MediaQuery.of(context).size.width*0.05,color:Colors.black),
+                    onSaved: (var value){
+                      setState(() {
+                        currentpost['title']=value;
+                      });
+                    },
+                    validator: (value){
+                      if(value==""||value==null){
+                        return "Please enter a title";
+                      }
+                      else{
+                        return null;
+                      }
+                    },
+                    onChanged:(v)=> _formKey.currentState.validate(),
+                    decoration: InputDecoration(
+                      labelText: "Title",
+                      errorStyle: GoogleFonts.balooBhai(),
+                      labelStyle: GoogleFonts.balooBhaina(fontSize: 16),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 15.0,vertical: 8.0),
+                      suffixIcon: !emptyfields ? Icon(Icons.title,):Icon(Icons.error,color: Colors.red,),
+                      border: InputBorder.none,
                     ),
-                  ),
-                ),
 
-                Padding(
-                  padding: const EdgeInsets.only(top:9.0,bottom:5.0),
-                  child: Material(
-                    elevation: 5.0,
-                    borderRadius: BorderRadius.all(Radius.circular(5.0)),
-                    child: TextFormField(
-                      controller: _captionController,
-                      style: TextStyle(fontSize: MediaQuery.of(context).size.width*0.04,color:Colors.black,fontWeight: FontWeight.w700),
-                      onSaved: (var value){
-                        setState(() {
-                          currentpost['caption']=value;
-                        });
-                      },
-                      maxLines: 4,
-                      decoration: InputDecoration(
-                        labelText: "Caption",
-                        contentPadding: EdgeInsets.symmetric(horizontal: 18.0,vertical: 8.0),
-                        suffixIcon: !emptyfields ? Icon(Icons.description,color: Colors.black,):Icon(Icons.error,color: Colors.red,),
-                        border: InputBorder.none,
+                  ),
+
+                  TextFormField(
+                    focusNode: myFocusNode,
+                    controller: _captionController,
+                    style: GoogleFonts.aBeeZee(fontSize: MediaQuery.of(context).size.width*0.05,color:Colors.black,),
+                    onSaved: (var value){
+                      setState(() {
+                        currentpost['caption']=value;
+                      });
+                    },
+                    validator: (val){
+                      if(val==""||val==null){
+                        return "Please enter a title";
+                      }
+                      else{
+                        return null;
+                      }
+                    },
+                    onChanged: (val){
+                      setState(() {
+                        myFocusNode.requestFocus();
+                        _formKey.currentState.validate();
+                      });
+                    },
+                    maxLines: 4,
+                    decoration: InputDecoration(
+                      labelText: "Caption",
+                      errorStyle: GoogleFonts.balooBhai(),
+                      labelStyle: GoogleFonts.balooBhaina(fontSize: 16),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 18.0,vertical: 8.0),
+                      suffixIcon: !emptyfields ? myFocusNode.hasFocus?IconButton(icon: Icon(Icons.check_circle,color: Colors.blueAccent,
                       ),
-
+                      onPressed: (){
+                        setState(() {
+                          myFocusNode.unfocus();
+                        });
+                      },):Icon(Icons.description)
+                          :Icon(Icons.error,color: Colors.red,),
+                      border: InputBorder.none,
                     ),
+
                   ),
-                ),
-              ],
+                ],
+              ),
+
             ),
-
-          ),
-          FlatButton.icon(
-            label:Text("Upload",style: TextStyle(color: Colors.black,fontSize: MediaQuery.of(context).size.width*0.05,fontWeight: FontWeight.w700),) ,
-            icon: Icon(Icons.cloud_upload) ,
-            onPressed: startUpload,
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: FlatButton.icon(
+                label:Text("Upload",style: GoogleFonts.balooBhai(color: Colors.black87,fontSize:18,),) ,
+                icon: Icon(Icons.cloud_upload,color: Colors.grey,) ,
+                onPressed: (){
+                  if(_formKey.currentState.validate()){
+                    startUpload();
+                  }
+                }
+              ),
+            ),
+          ],
+        ),
       );
     }
 

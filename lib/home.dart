@@ -49,7 +49,7 @@ class _HomepageState extends State<Homepage> {
   Widget build(BuildContext context) {
     return Scaffold(
         body:StreamBuilder<QuerySnapshot>(
-            stream: Firestore.instance.collection("allvideos").snapshots(),
+            stream: Firestore.instance.collection("allvideos").orderBy("id",descending: true).snapshots(),
             builder: (context, snapshot) {
               if(snapshot.hasData){
                 videos.clear();
@@ -160,11 +160,11 @@ class _VideoAppState extends State<VideoApp> {
                       maxHeight: double.infinity,
                       alignment: Alignment.center,
                       child: new FittedBox(
-                          fit: BoxFit.cover,
+                          fit: BoxFit.fill,
                           alignment: Alignment.center,
                           child: new Container(
-                              width: _controller.value.size.width,
-                              height: _controller.value.size.height,
+                              width: MediaQuery.of(context).size.width,
+                              height:MediaQuery.of(context).size.height,
                               child: new VideoPlayer(_controller)
                           )
                       )

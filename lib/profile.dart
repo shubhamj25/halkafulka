@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:halkaphulka1/home.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:video_player/video_player.dart';
 
 import 'login.dart';
+List<VideoGridTile> myVideos=[];
 
 class Profile extends StatefulWidget {
   final String email;
@@ -275,7 +277,26 @@ class _PreviousPostsState extends State<PreviousPosts> {
             ),
             body: TabBarView(
               children: [
-                Icon(Icons.video_library),
+                StreamBuilder<QuerySnapshot>(
+                  stream: Firestore.instance.collection("allvideos").snapshots(),
+                  builder: (context,snapshot){
+                    myVideos.clear();
+                    if(snapshot.hasData){
+                      for(int i=0;i<snapshot.data.documents.length;i++){
+                        if(snapshot.data.documents.elementAt(i).data['postedby']==loggedInEmail){
+                          myVideos.add(VideoGridTile(VideoGridCardDetails.fromSnapshot(snapshot.data.documents.elementAt(i))));
+                        }
+                      }
+                    }
+                    return snapshot.hasData?GridView.count(
+                      shrinkWrap: true,
+                      primary: false,
+                      crossAxisCount: 3,
+                      children: myVideos,
+                    ):LinearProgressIndicator();
+                  },
+                  
+                ),
                 Icon(Icons.thumb_up),
                 Icon(Icons.drafts),
               ],
@@ -314,5 +335,71 @@ class _AnimatedCountState extends AnimatedWidgetBaseState<AnimatedCount> {
   @override
   void forEachTween(TweenVisitor visitor) {
     _count = visitor(_count, widget.count, (dynamic value) => new IntTween(begin: value));
+  }
+}
+
+
+class VideoGridCardDetails{
+  final String link,title,subpara,postedby,id;
+  int likes;
+  VideoGridCardDetails.fromMap(Map<dynamic ,dynamic> map)
+      : assert(map['link']!=null),
+        link=map['link'],
+        title=map['title'],
+        subpara=map['subpara'],
+        id=map['id'],
+        postedby=map['postedby'],
+        likes=map['likes'];
+  VideoGridCardDetails.fromSnapshot(DocumentSnapshot snapshot):this.fromMap(snapshot.data);
+}
+class VideoGridTile extends StatefulWidget {
+  final VideoGridCardDetails videoCardDetails;
+  VideoGridTile(this.videoCardDetails);
+  @override
+  _VideoGridTileState createState() => _VideoGridTileState();
+}
+
+class _VideoGridTileState extends State<VideoGridTile> {
+  VideoPlayerController _controller;
+  @override
+  void initState() {
+    super.initState();
+    _controller = VideoPlayerController.network(
+        widget.videoCardDetails.link)
+      ..initialize().then((_) {
+        // Ensure the first frame is shown after the video is initialized, even before the play button has been pressed.
+        setState(() {
+          _controller.play();
+        });
+      });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return  Scaffold(
+      body: Center(
+        child: _controller.value.initialized
+            ?GridTile(
+                child: new FittedBox(
+                    fit: BoxFit.fill,
+                    alignment: Alignment.center,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border:Border.all(color: Colors.white,width: 0.1)
+                      ),
+                        width: MediaQuery.of(context).size.width*0.3333333333,
+                        height:MediaQuery.of(context).size.width*0.3333333333,
+                        child: new VideoPlayer(_controller,))
+                )
+            )
+            : Center(child:Container(width:18,height:18,child: CircularProgressIndicator())),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _controller.dispose();
   }
 }
