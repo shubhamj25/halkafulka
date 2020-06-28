@@ -5,9 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'login.dart';
 
-
 Future<void> main() async{
-  ErrorWidget.builder = (FlutterErrorDetails details) => Container();
   WidgetsFlutterBinding.ensureInitialized();
   await FirebaseApp.configure(
       name:'Halka-Phulka',
@@ -31,6 +29,7 @@ class _MyAppState extends State<MyApp> {
     return  MaterialApp(
       title: "Halka Phulka",
       debugShowCheckedModeBanner: false,
+
       home: Login(),
       /*routes: <String, WidgetBuilder> {
         '/home': (BuildContext context) => new MyBottomNavigationBar(),

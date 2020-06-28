@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_advanced_networkimage/provider.dart';
 import 'package:flutter_facebook_login/flutter_facebook_login.dart';
 import 'package:halkaphulka1/signup.dart';
@@ -235,20 +236,29 @@ class _LoginState extends State<Login> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[
-                          SizedBox(height: MediaQuery.of(context).size.height*0.05),
+                          SizedBox(height: MediaQuery.of(context).size.height*0.04),
+                          Container(
+                            width: 120,
+                            height: 120,
+                            child: CachedNetworkImage(
+                              imageUrl: "https://firebasestorage.googleapis.com/v0/b/halkafulka-221d3.appspot.com/o/appicon.png?alt=media&token=1149b22a-aded-4a39-907e-f7df06aad868",
+                              fadeInDuration: Duration(milliseconds: 500),
+                              fadeInCurve: Curves.easeIn,
+                            ),
+                          ),
                           Column(
                             mainAxisAlignment: MainAxisAlignment.start,
                             children: <Widget>[
-                              Text("Halka Phulka",style: GoogleFonts.laBelleAurore(fontWeight: FontWeight.bold,fontSize: 35,color:Colors.white),),
-                              Text("#Local Vocal",style: GoogleFonts.laBelleAurore(fontWeight: FontWeight.bold,fontSize: 25,color:Colors.white),),
+                              Text("Halka Phulka",style: GoogleFonts.happyMonkey(fontWeight: FontWeight.bold,fontSize: 30,color:Colors.white),),
+                              Text("#Local Vocal",style: GoogleFonts.happyMonkey(fontWeight: FontWeight.bold,fontSize: 20,color:Colors.white),),
                             ],
                           ),
 
                           loginpress &&!_formKey.currentState.validate()?
-                          SizedBox(height: MediaQuery.of(context).size.height*0.03):Container(),
+                          SizedBox(height: MediaQuery.of(context).size.height*0.08):Container(),
 
                           !loginpress?
-                          SizedBox(height: MediaQuery.of(context).size.height*0.06):Container(),
+                          SizedBox(height: MediaQuery.of(context).size.height*0.04):Container(),
                           //email
                           loggedInPassword==null?
                           Column(
@@ -283,11 +293,11 @@ class _LoginState extends State<Login> {
                                         cursorColor: Colors.white,
                                         controller: _emailController,
                                         keyboardType: TextInputType.emailAddress,
-                                        style: GoogleFonts.aBeeZee(fontSize: 16,color: Colors.white),
+                                        style: GoogleFonts.happyMonkey(fontSize: 16,color: Colors.white),
                                         decoration: InputDecoration(
                                             errorMaxLines: 2,
                                             errorStyle: GoogleFonts.balooBhaina(color: Colors.white),
-                                            hintStyle: GoogleFonts.aBeeZee(fontSize: 16,color: Colors.white),
+                                            hintStyle: GoogleFonts.happyMonkey(fontSize: 16,color: Colors.white),
                                             contentPadding: const EdgeInsets.symmetric(horizontal:14.0,vertical: 8.0),
                                             border: InputBorder.none,
                                             hintText: 'Email'
@@ -323,7 +333,7 @@ class _LoginState extends State<Login> {
                                         cursorColor: Colors.white,
                                         controller: _passwordController,
                                         obscureText: hidepass,
-                                        style: GoogleFonts.aBeeZee(fontSize: 16,color: Colors.white),
+                                        style: GoogleFonts.happyMonkey(fontSize: 16,color: Colors.white),
                                         validator:(String value){
                                           if(value==""||value==null){
                                             return "Empty Password";
@@ -335,7 +345,7 @@ class _LoginState extends State<Login> {
                                         onChanged: (val)=>_formKey.currentState.validate(),
                                         decoration: InputDecoration(
                                           errorMaxLines: 2,
-                                          hintStyle: GoogleFonts.aBeeZee(fontSize: 16,color: Colors.white),
+                                          hintStyle: GoogleFonts.happyMonkey(fontSize: 16,color: Colors.white),
                                           errorStyle: GoogleFonts.balooBhaina(color: Colors.white),
                                           contentPadding: const EdgeInsets.symmetric(horizontal:14.0,vertical: 8.0),
                                           border: InputBorder.none,
@@ -372,7 +382,7 @@ class _LoginState extends State<Login> {
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(vertical:16.0,horizontal: 16.0),
                                 child: Text("You previously Signed in with $loggedInEmail.\nDo you want to Continue ?",textAlign: TextAlign.center
-                                  ,style: GoogleFonts.poppins(fontSize: 16,color: Colors.white,),),
+                                  ,style: GoogleFonts.happyMonkey(fontSize: 16,color: Colors.white,),),
                               ),
                             ),
                           ):Container(),
@@ -468,10 +478,11 @@ class _LoginState extends State<Login> {
                               color: Colors.white,
                               child: Text(
                                 (loggedInEmail!=null&&loggedInPassword!=null)?'Continue':'Login',
-                                style: GoogleFonts.balooBhai(
+                                style: GoogleFonts.happyMonkey(
                                   letterSpacing: 1.5,
                                   fontSize: 18.0,
-                                  color: Colors.black54
+                                  color: Colors.black54,
+                                  fontWeight: FontWeight.bold
                                 ),
                               ),
                             ),
@@ -488,7 +499,7 @@ class _LoginState extends State<Login> {
                               padding: EdgeInsets.only(left: 22.0),
                               child: Text(
                                 'Forgot Password?',
-                                style: GoogleFonts.poppins(fontWeight: FontWeight.bold,color: Colors.white,fontSize: 18),
+                                style: GoogleFonts.happyMonkey(color: Colors.white,fontSize: 18),
                               ),
                             ),
                           ):Container(),
@@ -516,14 +527,14 @@ class _LoginState extends State<Login> {
                                   ),
                                   Text(
                                     'Remember me',
-                                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold,color: Colors.white,fontSize: 18),
+                                    style: GoogleFonts.happyMonkey(color: Colors.white,fontSize: 18),
                                   ),
                                 ],
                               ),
                             ),
                           ),
 
-                          SizedBox(height: MediaQuery.of(context).size.height*0.1,),
+                          SizedBox(height: MediaQuery.of(context).size.height*0.05,),
                           _buildSocialBtnRow(),
                         ],
                       ),

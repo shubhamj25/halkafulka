@@ -1,3 +1,5 @@
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:camera/camera.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
@@ -6,13 +8,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_swiper/flutter_swiper.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:halkaphulka1/profile.dart';
+import 'package:halkaphulka1/socialApp.dart';
+import 'package:halkaphulka1/widgets/duet_cam.dart';
 import 'package:progress_indicators/progress_indicators.dart';
 import 'package:share/share.dart';
 import 'package:video_player/video_player.dart';
 import 'camera.dart';
-import 'favourites.dart';
-
 String loggedInEmail;
 String loggedInPassword;
 Color deepRed=Color.fromRGBO(253, 11, 23, 1);
@@ -25,6 +28,9 @@ List<VideoApp> videos=[];
 
 bool  closingloggingalert=false;
 class Homepage extends StatefulWidget {
+  final bool rememberMe;
+  const Homepage(this.rememberMe);
+
   @override
   _HomepageState createState() => _HomepageState();
 }
@@ -45,30 +51,108 @@ class _HomepageState extends State<Homepage> {
   bool requestingotp=false;
   bool phoneregistered=true;
   //bool _autoValidate = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body:StreamBuilder<QuerySnapshot>(
-            stream: Firestore.instance.collection("allvideos").orderBy("id",descending: true).snapshots(),
-            builder: (context, snapshot) {
-              if(snapshot.hasData){
-                videos.clear();
-                for(int i=0;i<snapshot.data.documents.length;i++){
-                  videos.add(VideoApp(VideoCardDetails.fromSnapshot(snapshot.data.documents[i])));
-                }
-              }
-              return !snapshot.hasData?Center(child: CircularProgressIndicator()):Swiper(
-                  containerHeight: MediaQuery.of(context).size.height,
-                  itemCount:snapshot.data.documents.length,
-                  itemBuilder: (BuildContext context,int index){
-                    return Stack(
+        body:SingleChildScrollView(
+          child: Column(
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    IconButton(icon: Icon(Icons.add_a_photo,color: Colors.indigoAccent,size: 30,),
+                    onPressed: (){
+                      setState(() {
+                        Navigator.pushReplacement(context, MaterialPageRoute(
+                          builder: (context){
+                            return MyBottomNavigationBar(currentState: 1,username: loggedInEmail,rememberMe: widget.rememberMe,);
+                          }
+                        ));
+                      });
+                    },
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Text("Halka Fulka",style: GoogleFonts.happyMonkey(fontSize: 25,color:Color.fromARGB(170, 0, 0, 0),fontWeight: FontWeight.bold),),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal:8.0),
+                      child: StreamBuilder(
+                        stream: Firestore.instance.collection("users").document(loggedInEmail).snapshots(),
+                        builder: (context, snapshot) {
+                          return snapshot.hasData?
+                          snapshot.data['photoURL']!=null?Material(
+                            shape: CircleBorder(),
+                            child: Container(
+                                width: 35,
+                                height: 35,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                ),
+                                child:CachedNetworkImage(
+                                    fadeInDuration: Duration(milliseconds: 500),
+                                    fadeInCurve: Curves.easeIn,
+                                    imageUrl: snapshot.data['photoURL'],
+                                    fit: BoxFit.fill,
+                                    imageBuilder: (context, imageProvider) => Container(
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        image: DecorationImage(
+                                            image: imageProvider, fit: BoxFit.cover),
+                                      ),
+                                    ),
+                                    placeholder: (context, url) => Center(
+                                      child: HeartbeatProgressIndicator(
+                                        child: Icon(Icons.account_circle,size: 25,color: Colors.grey,),
+                                      ),
+                                    ),
+                                    errorWidget: (context, url, error) => Icon(Icons.image,size: 25,color: Colors.blueAccent,)
+                                )
+                            ),
+                          ):
+                          Icon(Icons.account_circle,size: 25,color: Colors.blueAccent,)
+                          :HeartbeatProgressIndicator(
+                            child: Icon(Icons.account_circle,size: 25,color: Colors.grey,),
+                          );
+                        }
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              StreamBuilder<QuerySnapshot>(
+                  stream: Firestore.instance.collection("allPosts").orderBy("timestamp",descending: true).snapshots(),
+                  builder: (context, snapshot){
+                    return !snapshot.hasData?Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Center(child: Container(width: 27,height: 27,child: CircularProgressIndicator(backgroundColor: Colors.white,strokeWidth: 2,))),
+                    ):
+                    snapshot.data.documents.isNotEmpty?
+                    Container(
+                      height: MediaQuery.of(context).size.height*0.85,
+                      child: Swiper(
+                        itemBuilder: (context,i){
+                          return VideoApp(videoCardDetails: VideoCardDetails.fromSnapshot(snapshot.data.documents[i]),);
+                        },
+                        itemCount: snapshot.data.documents.length,
+                        pagination: SwiperPagination(),
+                      ),
+                    ):Column(
                       children: <Widget>[
-                        videos.elementAt(index),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical:32.0),
+                          child: Text("No Recent Posts",style: GoogleFonts.happyMonkey(fontSize: 20),),
+                        )
                       ],
                     );
                   }
-              );
-            }
+              ),
+              SizedBox(height: 40,)
+            ],
+          ),
         )
     );
   }
@@ -76,12 +160,17 @@ class _HomepageState extends State<Homepage> {
 
 List<Comments> comments=[];
 class VideoCardDetails{
-  final String link,title,subpara,postedby,id;
+  final String link,title,subpara,postedby,id,type,link2,type2,initVideoId;
   int likes;
   VideoCardDetails.fromMap(Map<dynamic ,dynamic> map)
       : assert(map['link']!=null),
+        assert(map['type']!=null),
         link=map['link'],
+        link2=map['link2'],
+        type2=map['type2'],
+        initVideoId=map['initVideoId'],
         title=map['title'],
+        type=map['type'],
         subpara=map['subpara'],
         id=map['id'],
         postedby=map['postedby'],
@@ -99,19 +188,20 @@ void share(BuildContext context,VideoCardDetails videoCardDetails){
 
 class VideoApp extends StatefulWidget {
   final VideoCardDetails videoCardDetails;
-  VideoApp(this.videoCardDetails);
+  const VideoApp({Key key, this.videoCardDetails}) : super(key: key);
   @override
   _VideoAppState createState() => _VideoAppState();
 }
 
 class _VideoAppState extends State<VideoApp> {
   VideoPlayerController _controller;
+  VideoPlayerController _controller2;
   final commentController=TextEditingController();
   bool favourite=false;
   final _formKey = GlobalKey<FormState>();
   final searchFieldController=TextEditingController();
   final phoneFieldController=TextEditingController();
-  bool _obscureText = true;
+  //bool _obscureText = true;
   bool onsignupclick=false;
   bool onsubmit=false;
   double signupfieldopac=0.0;
@@ -122,632 +212,781 @@ class _VideoAppState extends State<VideoApp> {
   bool phonesignup=false;
   bool requestingotp=false;
   bool phoneregistered=true;
-  bool _autoValidate = false;
+  TextOverflow overflow=TextOverflow.ellipsis;
+
   @override
   void initState() {
-    super.initState();
-    if(signedin['username']!=null)
-      Firestore.instance.collection("${signedin['username']}_favourites").document(widget.videoCardDetails.title.toString()).get().then((doc){
-        if(doc.exists){
-          setState(() {
-            favourite=true;
-          });
-        }
-      });
-    _controller = VideoPlayerController.network(
-        widget.videoCardDetails.link)
-      ..initialize().then((_) {
-        // Ensure the first frame is shown after the video is initialized, even before the play button has been pressed.
+    Firestore.instance.collection('favourites').document(loggedInEmail).collection("likedVideos").document(widget.videoCardDetails.id).get().then((doc){
+      if(doc.exists){
         setState(() {
-          _controller.play();
+          favourite=true;
         });
-      });
+      }
+    });
+    if(widget.videoCardDetails.type=="video"){
+      _controller = VideoPlayerController.network(
+          widget.videoCardDetails.link)
+        ..initialize().then((_) {
+          // Ensure the first frame is shown after the video is initialized, even before the play button has been pressed.
+          setState(() {
+            _controller.play();
+          });
+        });
+    }
+    if(widget.videoCardDetails.type2=="video"){
+      _controller2 = VideoPlayerController.network(
+          widget.videoCardDetails.link2)
+        ..initialize().then((_) {
+          // Ensure the first frame is shown after the video is initialized, even before the play button has been pressed.
+          setState(() {
+            _controller2.play();
+          });
+        });
+    }
+    super.initState();
   }
-
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    _controller.dispose();
+    _controller2.dispose();
+    super.dispose();
+  }
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        body: Center(
-          child: _controller.value.initialized
-              ?Stack(
-            alignment: Alignment.bottomLeft,
-            children: <Widget>[
-              ClipRect(
-                  child: new OverflowBox(
-                      maxWidth: double.infinity,
-                      maxHeight: double.infinity,
-                      alignment: Alignment.center,
-                      child: new FittedBox(
-                          fit: BoxFit.fill,
-                          alignment: Alignment.center,
-                          child: new Container(
-                              width: MediaQuery.of(context).size.width,
-                              height:MediaQuery.of(context).size.height,
-                              child: new VideoPlayer(_controller)
-                          )
-                      )
-                  )
-              ),
-              Positioned(
-                  bottom:100.0,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal:16.0),
-                        child: Text("${widget.videoCardDetails.title}",style: TextStyle(fontSize: MediaQuery.of(context).size.width*0.055,fontWeight: FontWeight.w700,color:Colors.white),),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal:16.0),
-                        child: Text("by ${widget.videoCardDetails.postedby}",style: TextStyle(fontSize: MediaQuery.of(context).size.width*0.052,fontWeight: FontWeight.w600,color:Colors.white),),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal:16.0),
-                        child: Container(
-                            width: 350.0,
-                            child: Text("${widget.videoCardDetails.subpara}",style: TextStyle(fontSize: MediaQuery.of(context).size.width*0.05,fontWeight: FontWeight.w400,color:Colors.white),)),
-                      ),
-                      Row(
-                        children: <Widget>[
-                          Padding(
-                            padding: const EdgeInsets.only(left:16.0,right: 4.0),
-                            child: Icon(Icons.favorite,size: 25.0,color: Colors.white,),
-                          ),
-                          Text("${widget.videoCardDetails.likes}",style: TextStyle(fontSize: MediaQuery.of(context).size.width*0.052,fontWeight: FontWeight.w600,color:Colors.white),),
-                        ],
-                      ),
-                    ],
-                  )),
-              VideoProgressIndicator(_controller, allowScrubbing: true),
-            ],
-          )
-              : Center(child:   CollectionScaleTransition(
-            children: <Widget>[
-              Icon(Icons.fiber_manual_record,color: Colors.red,),
-              Icon(Icons.fiber_manual_record,color: Colors.blue,),
-              Icon(Icons.fiber_manual_record,color: Colors.yellow,),
-              Icon(Icons.fiber_manual_record,color: Colors.green,),
-            ],
-          ),),
+    return widget.videoCardDetails.type=="video"?
+    Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Material(
+        elevation: 8,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
         ),
-        floatingActionButton: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.only(left:18.0),
-              child: FloatingActionButton(
-                  heroTag: Timestamp.now().microsecondsSinceEpoch,
-                  child: Icon(Icons.comment),
-                  onPressed: () {
-                    showDialog (
-                      context:context,
-                      builder:(context) {
-                        return StatefulBuilder(
-                            builder: (context, setState) {
-                              return SingleChildScrollView(
-                                child: AlertDialog(
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.all(Radius.circular(12.0))),
-                                  content: Container(
-                                    height: 400.0,
-                                    child: Column(
-                                      children: <Widget>[
-                                        Row(
-                                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                          children: <Widget>[
-                                            Row(
-                                              children: <Widget>[
-                                                Padding(
-                                                  padding: const EdgeInsets.all(8.0),
-                                                  child: Icon(Icons.edit,size: 20.0),
-                                                ),
-                                                Padding(
-                                                  padding: const EdgeInsets.all(8.0),
-                                                  child: Text("Comments",style:TextStyle(fontSize: MediaQuery.of(context).size.width*0.05,fontWeight: FontWeight.w600)),
-                                                ),
-                                              ],
-                                            ),
+        child: SingleChildScrollView(
+          child: Column(
+            children: <Widget>[
+              Material(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.only(topRight:Radius.circular(10),topLeft: Radius.circular(10)),
+                ),
+                color: Color.fromARGB(200, 0, 0, 0),
+                child: Row(
+                  children: <Widget>[
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: StreamBuilder(
+                          stream: Firestore.instance.collection("users").document(widget.videoCardDetails.postedby).snapshots(),
+                          builder: (context, snapshot) {
+                            return snapshot.hasData?
+                            snapshot.data['photoURL']!=null?Material(
+                              shape: CircleBorder(),
+                              child: Container(
+                                alignment: Alignment.topCenter,
+                                width: 35.0,
+                                height: 35.0,
+                                decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color:Colors.white,width: 2)
+                                ),
+                                child: CachedNetworkImage(
+                                    imageUrl: snapshot.data['photoURL'],
+                                    fadeInDuration: Duration(milliseconds: 500),
+                                    fadeInCurve: Curves.easeIn,
+                                    imageBuilder: (context, imageProvider) => Container(
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        image: DecorationImage(
+                                            image: imageProvider, fit: BoxFit.cover),
+                                      ),
+                                    ),
+                                    placeholder: (context, url) => Padding(
+                                      padding: const EdgeInsets.all(32.0),
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                    errorWidget: (context, url, error) => Icon(Icons.person,color: Colors.blueAccent,)
+                                ),
+                              ),
+                            ):Icon(Icons.account_circle,size: 35,color: Colors.blueAccent,)
+                                :Icon(Icons.account_circle,color: Colors.grey,size: 35,)
+                            ;
+                          }
+                      ),
+                    ),
+                    Text(widget.videoCardDetails.postedby,style: GoogleFonts.happyMonkey(color: Colors.white,fontWeight: FontWeight.w600,fontSize: 18),),
+                  ],
+                ),
+              ),
+              Stack(
+                alignment: Alignment.bottomCenter,
+                children: <Widget>[
+                  InkWell(
+                    onTap: (){
+                      if(_controller.value.initialized){
+                        setState(() {
+                          _controller.value.isPlaying?_controller.pause():_controller.play();
+                        });
+                      }
+                      if(_controller2.value.initialized){
+                        setState(() {
+                          _controller2.value.isPlaying?_controller2.pause():_controller2.play();
+                        });
+                      }
+                    },
+                    child: Row(
+                      children: <Widget>[
+                        Container(
+                            width: widget.videoCardDetails.link2!=null?MediaQuery.of(context).size.width*0.477:MediaQuery.of(context).size.width*0.955,
+                            height: MediaQuery.of(context).size.width*0.8,
+                            child:_controller.value.initialized?new VideoPlayer(_controller): Center(child:   HeartbeatProgressIndicator(
+                              child: Icon(Icons.video_library,size: 40,color: Colors.grey,),
+                            ),)
+                        ),
+                        widget.videoCardDetails.link2!=null&&widget.videoCardDetails.type2=='video'?Container(
+                            width: widget.videoCardDetails.link2!=null?MediaQuery.of(context).size.width*0.477:MediaQuery.of(context).size.width*0.955,
+                            height: MediaQuery.of(context).size.width*0.8,
+                            child:_controller2.value.initialized?new VideoPlayer(_controller2): Center(child:   HeartbeatProgressIndicator(
+                              child: Icon(Icons.video_library,size: 40,color: Colors.grey,),
+                            ),)
+                        ):widget.videoCardDetails.link2!=null&&widget.videoCardDetails.type2!='video'?
+                        Container(
+                          width: widget.videoCardDetails.link2!=null?MediaQuery.of(context).size.width*0.477:MediaQuery.of(context).size.width*0.955,
+                          height: MediaQuery.of(context).size.width*0.8,
+                          child: CachedNetworkImage(
+                              fadeInDuration: Duration(milliseconds: 500),
+                              fadeInCurve: Curves.easeIn,
+                              imageUrl: widget.videoCardDetails.link,
+                              fit: BoxFit.fill,
+                              placeholder: (context, url) => Padding(
+                                padding: const EdgeInsets.all(32.0),
+                                child: Center(
+                                  child: HeartbeatProgressIndicator(
+                                    child: Icon(Icons.image,size: 50,color: Colors.grey,),
+                                  ),
+                                ),
+                              ),
+                              errorWidget: (context, url, error) => Icon(Icons.image,size: 50,color: Colors.blueAccent,)
+                          ),
+                        ):Container(),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal:8.0,vertical:16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: <Widget>[
+                        Padding(
+                          padding: const EdgeInsets.only(left:18.0),
+                          child: Container(
+                            width: 50,
+                            height: 50,
+                            child: FloatingActionButton(
+                                heroTag: Timestamp.now().microsecondsSinceEpoch,
+                                child: Icon(Icons.comment),
+                                onPressed: () {
+                                  showDialog (
+                                    context:context,
+                                    builder:(context) {
+                                      return StatefulBuilder(
+                                          builder: (context, setState) {
+                                            return AlertDialog(
+                                              shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.all(Radius.circular(12.0))),
+                                              content: SingleChildScrollView(
+                                                child: Column(
+                                                  children: <Widget>[
+                                                    Row(
+                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                      children: <Widget>[
+                                                        Row(
+                                                          children: <Widget>[
+                                                            Padding(
+                                                              padding: const EdgeInsets.all(8.0),
+                                                              child: Icon(Icons.edit,size: 20.0),
+                                                            ),
+                                                            Padding(
+                                                              padding: const EdgeInsets.all(8.0),
+                                                              child: Text("Comments",style:GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.05,fontWeight: FontWeight.w600)),
+                                                            ),
+                                                          ],
+                                                        ),
 
-                                            Padding(
-                                              padding: const EdgeInsets.all(8.0),
-                                              child: IconButton(
-                                                icon: Icon(Icons.close,size: 20.0,),
-                                                onPressed: (){
-                                                  Navigator.pop(context);
-                                                },
-                                              ),
-                                            )
-                                          ],
-                                        ),
+                                                        Padding(
+                                                          padding: const EdgeInsets.all(8.0),
+                                                          child: IconButton(
+                                                            icon: Icon(Icons.close,size: 20.0,),
+                                                            onPressed: (){
+                                                              Navigator.pop(context);
+                                                            },
+                                                          ),
+                                                        )
+                                                      ],
+                                                    ),
 
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(vertical: 3.0),
-                                          child: Material(
-                                            elevation: 12.0,
-                                            color: Colors.white,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius: BorderRadius.all(Radius.circular(10.0)),
-                                            ),
-                                            child: SizedBox(
-                                              width: 230.0,
-                                              child: TextFormField(
-                                                controller: commentController,
-                                                style: TextStyle(fontSize: MediaQuery.of(context).size.width*0.045,color:Colors.black,fontWeight: FontWeight.w700),
-                                                decoration: InputDecoration(
-                                                  labelText: "Comment",
-                                                  contentPadding: EdgeInsets.symmetric(horizontal: 8.0,vertical: 4.0),
-                                                  suffixIcon: IconButton(icon:Icon(Icons.send,color: Colors.black,),
-                                                    onPressed: (){
-                                                      setState(() {
-                                                        String comment=commentController.text;
-                                                        Firestore.instance.collection("comments").document('${widget.videoCardDetails.id}_comments').get().then((doc){
-                                                          if(doc.exists){
-                                                            Firestore.instance.collection("comments").document('${widget.videoCardDetails.id}_comments').updateData({
-                                                              'comments':FieldValue.arrayUnion(['$comment\n~ ${signedin['username']}']),
-                                                            });
+                                                    Padding(
+                                                      padding: const EdgeInsets.symmetric(vertical: 3.0),
+                                                      child: Material(
+                                                        elevation: 12.0,
+                                                        color: Colors.white,
+                                                        shape: RoundedRectangleBorder(
+                                                          borderRadius: BorderRadius.all(Radius.circular(10.0)),
+                                                        ),
+                                                        child: SizedBox(
+                                                          width: 230.0,
+                                                          child: TextFormField(
+                                                            controller: commentController,
+                                                            style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.045,color:Colors.black,fontWeight: FontWeight.w700),
+                                                            decoration: InputDecoration(
+                                                              labelText: "Comment",
+                                                              contentPadding: EdgeInsets.symmetric(horizontal: 8.0,vertical: 4.0),
+                                                              suffixIcon: IconButton(icon:Icon(Icons.send,color: Colors.black,),
+                                                                onPressed: (){
+                                                                  setState(() {
+                                                                    String comment=commentController.text;
+                                                                    Firestore.instance.collection("comments").document('${widget.videoCardDetails.id}_comments').get().then((doc){
+                                                                      if(doc.exists){
+                                                                        Firestore.instance.collection("comments").document('${widget.videoCardDetails.id}_comments').updateData({
+                                                                          'comments':FieldValue.arrayUnion(['$comment\n~ ${signedin['username']}']),
+                                                                        });
+                                                                      }
+                                                                      else{
+                                                                        Firestore.instance.collection("comments").document('${widget.videoCardDetails.id}_comments').setData({
+                                                                          'comments':FieldValue.arrayUnion(['$comment\n~ ${signedin['username']}']),
+                                                                        });
+                                                                      }
+                                                                    });
+                                                                    commentController.clear();
+                                                                  });
+                                                                },),
+                                                              border: InputBorder.none,
+                                                            ),
+
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+
+                                                    Container(
+                                                      height: 280.0,
+                                                      width: 300.0,
+                                                      child: StreamBuilder(
+                                                          stream: Firestore.instance.collection("comments").document('${widget.videoCardDetails.id}_comments').snapshots(),
+                                                          builder: (context,snapshot) {
+                                                            return !snapshot.hasData? Center(child: CircularProgressIndicator(backgroundColor: Colors.white,strokeWidth: 2,)):
+                                                            ListView.builder(
+                                                              itemCount:List.from(snapshot.data['comments']).length ,
+                                                              itemBuilder: (BuildContext context,index){
+                                                                return Comments(List.from(snapshot.data['comments']).reversed.elementAt(index));
+                                                              },
+                                                            );
                                                           }
-                                                          else{
-                                                            Firestore.instance.collection("comments").document('${widget.videoCardDetails.id}_comments').setData({
-                                                              'comments':FieldValue.arrayUnion(['$comment\n~ ${signedin['username']}']),
-                                                            });
-                                                          }
-                                                        });
-                                                        commentController.clear();
-                                                      });
-                                                    },),
-                                                  border: InputBorder.none,
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
-
                                               ),
-                                            ),
-                                          ),
-                                        ),
 
-                                        Container(
-                                          height: 280.0,
-                                          width: 300.0,
-                                          child: StreamBuilder(
-                                              stream: Firestore.instance.collection("comments").document('${widget.videoCardDetails.id}_comments').snapshots(),
-                                              builder: (context,snapshot) {
-                                                return !snapshot.hasData? Center(child: CircularProgressIndicator(backgroundColor: Colors.blue,)):
-                                                ListView.builder(
-                                                  itemCount:List.from(snapshot.data['comments']).length ,
-                                                  itemBuilder: (BuildContext context,index){
-                                                    return Comments(List.from(snapshot.data['comments']).reversed.elementAt(index));
-                                                  },
-                                                );
-                                              }
-                                          ),
-                                        ),
-                                      ],
+                                            );
+                                          }
+                                      );
+                                    },
+                                  );
+                                }
+                            ),
+                          ),
+                        ),
+
+                        Container(
+                          width: 50,height: 50,
+                          child: FloatingActionButton(
+                            heroTag: Timestamp.now().microsecondsSinceEpoch,
+                            backgroundColor: favourite? Colors.white:Colors.blue,
+                            child: !favourite?Icon(Icons.favorite):Icon(Icons.favorite,color: Colors.red,),
+                            onPressed: () {
+                              setState(() {
+                                if(favourite==false){
+                                  favourite=true;
+                                  widget.videoCardDetails.likes++;
+                                  Firestore.instance.collection("allPosts").document(widget.videoCardDetails.id.toString()).updateData({
+                                    'likes':widget.videoCardDetails.likes,
+                                  });
+                                  Firestore.instance.collection("favourites").document(loggedInEmail).collection("likedVideos").document(widget.videoCardDetails.id).setData({
+                                    'title':widget.videoCardDetails.title,
+                                    'postedby':widget.videoCardDetails.postedby,
+                                    'link':widget.videoCardDetails.link,
+                                    'id':widget.videoCardDetails.id,
+                                    'timestamp':Timestamp.now(),
+                                    "type":widget.videoCardDetails.type,
+                                    'subpara':widget.videoCardDetails.subpara,
+                                    'likes':widget.videoCardDetails.likes
+                                  });
+                                }
+                                else if(favourite==true){
+                                  favourite=false;
+                                  widget.videoCardDetails.likes--;
+                                  Firestore.instance.collection("allPosts").document(widget.videoCardDetails.id).updateData({
+                                    'likes':widget.videoCardDetails.likes,
+                                  });
+                                  Firestore.instance.collection("favourites").document(loggedInEmail).collection("likedVideos").document("${widget.videoCardDetails.id}").delete();
+                                }
+
+                              });
+                            },
+                          ),
+                        ),
+
+                        Container(
+                          width: 50,height: 50,
+                          child: FloatingActionButton(
+                            heroTag: Timestamp.now().microsecondsSinceEpoch,
+                            child: Icon(Icons.share),
+                            onPressed: ()=> share(context,widget.videoCardDetails),
+                          ),
+                        ),
+
+                        if(widget.videoCardDetails.type=="video")
+                          Container(
+                            width: 50,height: 50,
+                            child: FloatingActionButton(
+                              heroTag: Timestamp.now().microsecondsSinceEpoch,
+                              onPressed: () {
+                                 Navigator.push(context,MaterialPageRoute(builder: (context){
+                                   return DuetVIdeoCapture(initVideoUrl: widget.videoCardDetails.link,);
+                                 }));
+                              },
+                              child: Icon(Icons.control_point_duplicate,),
+                            ),
+                          )
+                          /*Container(
+                            width: 50,height: 50,
+                            child: FloatingActionButton(
+                              heroTag: Timestamp.now().microsecondsSinceEpoch,
+                              onPressed: () {
+                                setState(() {
+                                  _controller.value.isPlaying
+                                      ? _controller.pause()
+                                      : _controller.play();
+                                });
+                              },
+                              child: Icon(
+                                _controller.value.isPlaying ? Icons.pause :
+                                Icons.play_arrow,
+                              ),
+                            ),
+                          ),*/
+                      ],
+                    ),
+                  ),
+                  VideoProgressIndicator(_controller, allowScrubbing: true),
+                ],
+              ),
+              ListTile(
+                trailing: Icon(Icons.video_library,size: 30,),
+                title:Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text("${widget.videoCardDetails.title}",style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.05,fontWeight: FontWeight.w700),),
+                    Text("by ${widget.videoCardDetails.postedby}",style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.048,fontWeight: FontWeight.w600),),
+                  ],
+                ),
+                subtitle:Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    ConstrainedBox(
+                        constraints:BoxConstraints(
+                          maxHeight: 100,
+                        ),
+                        child: Text("${widget.videoCardDetails.subpara}",overflow: TextOverflow.fade,style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.05,fontWeight: FontWeight.w400),)),
+                    Row(
+                      children: <Widget>[
+                        Icon(Icons.favorite,size: 25.0,color: Colors.redAccent,),
+                        Text("${widget.videoCardDetails.likes}",style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.048,fontWeight: FontWeight.w600),),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+            ],
+          ),
+        ),
+      ),
+    )
+        :
+    Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Material(
+        elevation: 8,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            children: <Widget>[
+              Material(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.only(topRight:Radius.circular(10),topLeft: Radius.circular(10)),
+                ),
+                color: Color.fromARGB(200, 0, 0, 0),
+                child: Row(
+                  children: <Widget>[
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: StreamBuilder(
+                          stream: Firestore.instance.collection("users").document(widget.videoCardDetails.postedby).snapshots(),
+                          builder: (context, snapshot) {
+                            return snapshot.hasData?
+                            snapshot.data['photoURL']!=null?Material(
+                              shape: CircleBorder(),
+                              child: Container(
+                                alignment: Alignment.topCenter,
+                                width: 35.0,
+                                height: 35.0,
+                                decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color:Colors.white,width: 2)
+                                ),
+                                child: CachedNetworkImage(
+                                    imageUrl: snapshot.data['photoURL'],
+                                    fadeInDuration: Duration(milliseconds: 500),
+                                    fadeInCurve: Curves.easeIn,
+                                    imageBuilder: (context, imageProvider) => Container(
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        image: DecorationImage(
+                                            image: imageProvider, fit: BoxFit.cover),
+                                      ),
+                                    ),
+                                    placeholder: (context, url) => Padding(
+                                      padding: const EdgeInsets.all(32.0),
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                    errorWidget: (context, url, error) => Icon(Icons.account_circle,size: 35,color: Colors.blueAccent,)
+                                ),
+                              ),
+                            ):Icon(Icons.account_circle,size: 35,color: Colors.blueAccent,)
+                                :Icon(Icons.account_circle,color: Colors.grey,size: 35,)
+                            ;
+                          }
+                      ),
+                    ),
+                    Text(widget.videoCardDetails.postedby,style: GoogleFonts.happyMonkey(color: Colors.white,fontWeight: FontWeight.w600,fontSize: 18),),
+                  ],
+                ),
+              ),
+              Stack(
+                alignment: Alignment.bottomCenter,
+                children: <Widget>[
+                  InkWell(
+                    onTap: (){
+                      if(_controller.value.initialized){
+                        setState(() {
+                          _controller.value.isPlaying?_controller.pause():_controller.play();
+                        });
+                      }
+                      if(_controller2.value.initialized){
+                        setState(() {
+                          _controller2.value.isPlaying?_controller2.pause():_controller2.play();
+                        });
+                      }
+                    },
+                    child: Row(
+                      children: <Widget>[
+                        Container(
+                            width: widget.videoCardDetails.link2!=null?MediaQuery.of(context).size.width*0.477:MediaQuery.of(context).size.width*0.955,
+                            height: MediaQuery.of(context).size.width*0.8,
+                            child:CachedNetworkImage(
+                                fadeInDuration: Duration(milliseconds: 500),
+                                fadeInCurve: Curves.easeIn,
+                                imageUrl: widget.videoCardDetails.link,
+                                fit: BoxFit.fill,
+                                placeholder: (context, url) => Padding(
+                                  padding: const EdgeInsets.all(32.0),
+                                  child: Center(
+                                    child: HeartbeatProgressIndicator(
+                                      child: Icon(Icons.image,size: 50,color: Colors.grey,),
                                     ),
                                   ),
-
                                 ),
-                              );
-                            }
-                        );
-                      },
-                    );
-                  }
-              ),
-            ),
-
-            FloatingActionButton(
-              heroTag: Timestamp.now().microsecondsSinceEpoch,
-              backgroundColor: favourite? Colors.white:Colors.blue,
-              child: !favourite?Icon(Icons.favorite):Icon(Icons.favorite,color: Colors.red,),
-              onPressed: () {
-                setState(() {
-                  if(signedin['username']!=null){
-                    if(favourite==false){
-                      favourite=true;
-                      widget.videoCardDetails.likes++;
-                      Firestore.instance.collection("allvideos").document(widget.videoCardDetails.id.toString()).updateData({
-                        'likes':widget.videoCardDetails.likes,
-                      });
-                      Firestore.instance.collection('${signedin['username']}_favourites').document("${widget.videoCardDetails.title}").setData({
-                        'title':widget.videoCardDetails.title,
-                        'postedby':widget.videoCardDetails.postedby,
-                        'link':widget.videoCardDetails.link,
-                        'id':widget.videoCardDetails.id,
-                        'subpara':widget.videoCardDetails.subpara,
-                        'likes':widget.videoCardDetails.likes
-                      });
-                    }
-                    else if(favourite==true){
-                      favourite=false;
-                      widget.videoCardDetails.likes--;
-                      Firestore.instance.collection("allvideos").document(widget.videoCardDetails.id.toString()).updateData({
-                        'likes':widget.videoCardDetails.likes,
-                      });
-                      Firestore.instance.collection('${signedin['username']}_favourites').document("${widget.videoCardDetails.title}").delete();
-                    }
-                  }
-                  else{
-                    showDialog(
-                        context:context,
-                        builder:(context)
-                        {
-                          return StatefulBuilder(
-                              builder: (context, setState) {
-                                return SingleChildScrollView(
-                                  child: AlertDialog(
-                                    shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.all(Radius.circular(5.0))),
-                                    content: Column(
-                                      children: <Widget>[
-                                        loading?LinearProgressIndicator():Container(),
-                                        Form(
-                                          key:_formKey,
-                                          autovalidate: _autoValidate,
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                errorWidget: (context, url, error) => Icon(Icons.image,size: 40,color: Colors.blueAccent,)
+                            )
+                        ),
+                        widget.videoCardDetails.link2!=null&&widget.videoCardDetails.type2=='video'?Container(
+                            width: widget.videoCardDetails.link2!=null?MediaQuery.of(context).size.width*0.477:MediaQuery.of(context).size.width*0.955,
+                            height: MediaQuery.of(context).size.width*0.8,
+                            child:_controller2.value.initialized?new VideoPlayer(_controller2): Center(child:   HeartbeatProgressIndicator(
+                              child: Icon(Icons.video_library,size: 40,color: Colors.grey,),
+                            ),)
+                        ):widget.videoCardDetails.link2!=null&&widget.videoCardDetails.type2!='video'?
+                        Container(
+                          width: widget.videoCardDetails.link2!=null?MediaQuery.of(context).size.width*0.477:MediaQuery.of(context).size.width*0.955,
+                          height: MediaQuery.of(context).size.width*0.8,
+                          child: CachedNetworkImage(
+                              fadeInDuration: Duration(milliseconds: 500),
+                              fadeInCurve: Curves.easeIn,
+                              imageUrl: widget.videoCardDetails.link,
+                              fit: BoxFit.fill,
+                              placeholder: (context, url) => Padding(
+                                padding: const EdgeInsets.all(32.0),
+                                child: Center(
+                                  child: HeartbeatProgressIndicator(
+                                    child: Icon(Icons.image,size: 50,color: Colors.grey,),
+                                  ),
+                                ),
+                              ),
+                              errorWidget: (context, url, error) => Icon(Icons.image,size: 50,color: Colors.blueAccent,)
+                          ),
+                        ):Container(),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: <Widget>[
+                        Padding(
+                          padding: const EdgeInsets.only(left:18.0),
+                          child: Container(
+                            width: 50,
+                            height: 50,
+                            child: FloatingActionButton(
+                                heroTag: Timestamp.now().microsecondsSinceEpoch,
+                                child: Icon(Icons.comment),
+                                onPressed: () {
+                                  Navigator.push(context,MaterialPageRoute(
+                                    builder: (context){
+                                      return  SafeArea(
+                                        child: Scaffold(
+                                          body: Stack(
+                                            alignment: Alignment.bottomCenter,
                                             children: <Widget>[
-                                              onsignupclick ?Padding(
-                                                padding: const EdgeInsets.all(8.0),
-                                                child: Row(
-                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                              SingleChildScrollView(
+                                                child: Column(
                                                   children: <Widget>[
-                                                    Row(
-                                                      children: <Widget>[
-                                                        Padding(
-                                                          padding: const EdgeInsets.all(8.0),
-                                                          child: Icon(Icons.account_circle,size: 25.0,),
-                                                        ),
-                                                        Text("Sign Up",style: TextStyle(fontSize: MediaQuery.of(context).size.width*0.055,fontWeight: FontWeight.w700,color: Colors.blue),),
-
-                                                      ],
+                                                    SizedBox(height: 10,),
+                                                    ListTile(
+                                                        leading:Icon(Icons.edit,),
+                                                        title:Text("Comments",style:GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.05,fontWeight: FontWeight.w600)),
+                                                        subtitle: Text("${widget.videoCardDetails.title}\nby ${widget.videoCardDetails.postedby}",style: GoogleFonts.happyMonkey(fontSize: 14),),
+                                                        trailing:IconButton(
+                                                          icon: Icon(Icons.close,size: 20.0,color: deepRed,),
+                                                          onPressed: (){
+                                                            Navigator.pop(context);
+                                                          },
+                                                        )
                                                     ),
-                                                    onsignupclick? Padding(
-                                                      padding: const EdgeInsets.all(8.0),
-                                                      child: IconButton(
-                                                        icon: Icon(Icons.arrow_back,size: 25.0,),
-                                                        onPressed: (){
-                                                          setState(() {
-                                                            onsignupclick=false;
-                                                            onsubmit=false;
-                                                          });
-                                                        },
+                                                    Container(
+                                                      width: MediaQuery.of(context).size.width,
+                                                      height:  MediaQuery.of(context).size.height,
+                                                      child: StreamBuilder(
+                                                          stream: Firestore.instance.collection("comments").document('${widget.videoCardDetails.id}_comments').snapshots(),
+                                                          builder: (context,snapshot) {
+                                                            return !snapshot.hasData? Center(child: CircularProgressIndicator(backgroundColor: Colors.white,)):
+                                                            ListView.builder(
+                                                              itemCount:List.from(snapshot.data['comments']).length ,
+                                                              itemBuilder: (BuildContext context,index){
+                                                                return Comments(List.from(snapshot.data['comments']).reversed.elementAt(index));
+                                                              },
+                                                            );
+                                                          }
                                                       ),
-                                                    ):Container()
-                                                  ],
-                                                ),
-                                              ):Padding(
-                                                padding: const EdgeInsets.only(top:8.0),
-                                                child: Row(
-                                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                  children: <Widget>[
-                                                    Row(
-                                                      children: <Widget>[
-                                                        Padding(
-                                                          padding: const EdgeInsets.all(8.0),
-                                                          child: Icon(Icons.vpn_key,size: 25.0,),
-                                                        ),
-                                                        Text("Login",style: TextStyle(fontSize: MediaQuery.of(context).size.width*0.055,fontWeight: FontWeight.w700,color: Colors.blue),),
-                                                      ],
                                                     ),
-                                                    IconButton(
-                                                      icon: Icon(Icons.close,size: 25.0,),
-                                                      onPressed:() {
-                                                        Navigator.pop(context);
-                                                      },
-                                                    )
                                                   ],
                                                 ),
                                               ),
-
-
-                                              Padding(
-                                                padding: const EdgeInsets.only(top:9.0,bottom:5.0),
+                                              Form(
+                                                key: _formKey,
                                                 child: Material(
-                                                  elevation: 5.0,
-                                                  borderRadius: BorderRadius.all(Radius.circular(5.0)),
+                                                  elevation: 12.0,
+                                                  color: Colors.white,
                                                   child: TextFormField(
-                                                    style: TextStyle(fontSize: MediaQuery.of(context).size.width*0.045,color:Colors.black,fontWeight: FontWeight.w700),
-                                                    onSaved: (var value){
-                                                      formData['name']=value.trim();
-                                                      signupData['name']=value.trim();
-                                                    },
-                                                    decoration: InputDecoration(
-
-                                                      labelText: "Username",
-                                                      contentPadding: EdgeInsets.symmetric(horizontal: 18.0,vertical: 8.0),
-                                                      suffixIcon: !signinerror ? Icon(Icons.person,color: Colors.black,):Icon(Icons.error,color: Colors.red,),
-                                                      border: InputBorder.none,
-                                                    ),
-
-                                                  ),
-                                                ),
-                                              ),
-
-                                              onsignupclick?AnimatedOpacity(
-                                                opacity: signupfieldopac,
-                                                duration: Duration(seconds: 1),
-                                                child: Padding(
-                                                  padding: const EdgeInsets.only(top:9.0,bottom:5.0),
-                                                  child: Material(
-                                                    elevation: 5.0,
-                                                    borderRadius: BorderRadius.all(Radius.circular(5.0)),
-                                                    child: TextFormField(
-                                                      style: TextStyle(fontSize: MediaQuery.of(context).size.width*0.045,color:Colors.black,fontWeight: FontWeight.w700),
-                                                      controller: searchFieldController,
-                                                      onSaved: (var value){
-                                                        signupData['email']=value.trim();
-                                                      },
-                                                      validator:(String value){
-                                                        Pattern pattern =
-                                                            r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$';
-                                                        RegExp regex = new RegExp(pattern);
-                                                        if (!regex.hasMatch(value)) {
-                                                          status="Invalid Email Address";signupvalidation=false;
-                                                        }
-                                                        else{
-                                                          signupvalidation=true;
-                                                        }
-                                                        return null;
-                                                      },
-                                                      decoration: InputDecoration(
-                                                        labelText: "Email",
-                                                        contentPadding: EdgeInsets.symmetric(horizontal: 18.0,vertical: 8.0),
-                                                        suffixIcon: Padding(
-                                                          padding: const EdgeInsets.all(8.0),
-                                                          child: Icon(Icons.email,color: Colors.black,),
-                                                        ),
-                                                        border: InputBorder.none,
-                                                      ),
-
-
-                                                    ),
-                                                  ),
-                                                ),
-                                              ):Container(),
-
-
-                                              Padding(
-                                                padding: const EdgeInsets.only(top:9.0,bottom:5.0),
-                                                child: Material(
-                                                  elevation: 5.0,
-                                                  borderRadius: BorderRadius.all(Radius.circular(5.0)),
-                                                  child: TextFormField(
-                                                    style: TextStyle(color:Colors.black,fontSize:18.0,fontWeight: FontWeight.w700),
-                                                    onSaved: (var value){
-                                                      formData['password']=value;
-                                                      signupData['password']=value;
-                                                    },
-                                                    obscureText: _obscureText,
-                                                    decoration: InputDecoration(
-                                                      labelText: "Password",
-                                                      contentPadding: EdgeInsets.symmetric(horizontal: 18.0,vertical: 8.0),
-                                                      suffixIcon: !signinerror ? IconButton(icon:_obscureText ? Icon(Icons.lock,color: Colors.black,size: 28.0,):
-                                                      Icon(Icons.lock_open,color: Colors.black,size: 28.0,),
-                                                        onPressed: (){
-                                                          setState(() {
-                                                            if(_obscureText==true) _obscureText=false;
-                                                            else  if(_obscureText==false) _obscureText=true;
-                                                          });
-                                                        },):
-                                                      Icon(Icons.error,color: Colors.red,),
-                                                      border: InputBorder.none,
-                                                    ),
-
-                                                  ),
-                                                ),
-                                              ),
-
-                                              onsignupclick?
-                                              Padding(
-                                                padding: const EdgeInsets.only(top:9.0,bottom:5.0),
-                                                child: Material(
-                                                  elevation: 5.0,
-                                                  borderRadius: BorderRadius.all(Radius.circular(5.0)),
-                                                  child: TextFormField(
-                                                    style: TextStyle(fontSize: MediaQuery.of(context).size.width*0.045,color:Colors.black,fontWeight: FontWeight.w700),
-                                                    onSaved: (var value){
-                                                      signupData['phone']=value;
-                                                    },
-                                                    validator:(String value){
-                                                      if (value.trim().length!=13) {
-                                                        status="Invalid Phone Number";signupvalidation=false;
+                                                    controller: commentController,
+                                                    validator:(val){
+                                                      if(val==""||val==null){
+                                                        return "Please enter something";
                                                       }
                                                       else{
-                                                        signupvalidation=true;
+                                                        return null;
                                                       }
-                                                      return null;
-                                                    },
-                                                    keyboardType: TextInputType.phone,
+                                                      },
+                                                    style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.045,color:Colors.black,fontWeight: FontWeight.w700),
                                                     decoration: InputDecoration(
-                                                      labelText: "Mobile",
-                                                      contentPadding: EdgeInsets.symmetric(horizontal: 18.0,vertical: 8.0),
-                                                      suffixIcon: Padding(
-                                                        padding: const EdgeInsets.all(8.0),
-                                                        child: Icon(Icons.phone,color: Colors.black,),
-                                                      ),
-                                                      border: InputBorder.none,
+                                                      labelText: "Add Comment",
+                                                      errorStyle:GoogleFonts.balooBhai(),
+                                                      border:InputBorder.none,
+                                                      contentPadding: EdgeInsets.symmetric(horizontal: 14.0,),
+                                                      suffixIcon: IconButton(icon:Icon(Icons.send,color: Colors.blueAccent,),
+                                                        onPressed: (){
+                                                        if(_formKey.currentState.validate()){
+                                                          setState(() {
+                                                            String comment=commentController.text;
+                                                            Firestore.instance.collection("comments").document('${widget.videoCardDetails.id}_comments').get().then((doc){
+                                                              if(doc.exists){
+                                                                Firestore.instance.collection("comments").document('${widget.videoCardDetails.id}_comments').updateData({
+                                                                  'comments':FieldValue.arrayUnion(['$comment\n~ $loggedInEmail']),
+                                                                });
+                                                              }
+                                                              else{
+                                                                Firestore.instance.collection("comments").document('${widget.videoCardDetails.id}_comments').setData({
+                                                                  'comments':FieldValue.arrayUnion(['$comment\n~ $loggedInEmail']),
+                                                                },merge: true);
+                                                              }
+                                                            });
+                                                            commentController.clear();
+                                                          });
+                                                        }
+                                                        },),
                                                     ),
 
                                                   ),
                                                 ),
-                                              ):Container(),
-
-                                              Row(
-                                                mainAxisAlignment: MainAxisAlignment.center,
-                                                children: <Widget>[
-                                                  onsubmit==false?
-                                                  Padding(
-                                                    padding: const EdgeInsets.only(right:8.0,top:15.0,bottom:8.0),
-                                                    child: MaterialButton(
-                                                      color: Colors.redAccent,
-                                                      elevation: 10.0,
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius: BorderRadius.all(Radius.circular(5.0)),
-                                                      ),
-                                                      child: Padding(
-                                                        padding: const EdgeInsets.symmetric(horizontal:8.0,vertical:8.0),
-                                                        child: Text("Login",style:TextStyle(fontSize: MediaQuery.of(context).size.width*0.05,fontWeight: FontWeight.w600,color: Colors.white)),
-                                                      ),
-                                                      onPressed: (){
-                                                        setState(() {
-                                                          _formKey.currentState.save();
-                                                          signinerror=false;
-                                                          loading=true;
-                                                          Firestore.instance.collection('users').document(formData['name']).get().then((snapshot) {
-                                                            if(snapshot.exists && formData['name']==snapshot.data['name'] && formData['password']==snapshot.data['password']){
-                                                              setState(() {
-                                                                closingloggingalert=true;
-                                                                signedin["username"]=snapshot.data['name'];
-                                                                Navigator.pushReplacementNamed(context,'/home');
-                                                              });
-                                                            }
-                                                            else{
-                                                              setState(() {
-                                                                signinerror=true;
-                                                              });
-                                                            }
-                                                          });
-                                                        });
-                                                      },
-                                                    ),
-                                                  ):Container(),
-
-                                                  onsubmit==true?
-                                                  Padding(
-                                                    padding: const EdgeInsets.only(top:15.0,bottom:8.0,right: 5.0),
-                                                    child: MaterialButton(
-                                                      color:Colors.greenAccent,
-                                                      elevation: 10.0,
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius: BorderRadius.all(Radius.circular(5.0)),
-                                                      ),
-                                                      child: Padding(
-                                                        padding: const EdgeInsets.symmetric(horizontal:8.0,vertical:8.0),
-                                                        child: Text("Submit",style:TextStyle(fontSize: MediaQuery.of(context).size.width*0.05,fontWeight: FontWeight.w600,color: Colors.white)),
-                                                      ),
-                                                      onPressed: (){
-                                                        setState(() {
-                                                          _formKey.currentState.validate();
-                                                          if (signupvalidation) {
-                                                            _formKey.currentState.save();
-                                                            loading=true;
-                                                            print(signupData);
-                                                            Firestore.instance.collection('users').document(signupData['name']).setData({
-                                                              'name':signupData['name'],
-                                                              'email':signupData['email'],
-                                                              'password':signupData['password'],
-                                                              'phone':signupData['phone']
-                                                            });
-                                                            Firestore.instance.collection('regphones').document("${signupData['phone']}").setData({
-                                                              'phone_number': signupData['phone'],
-                                                            });
-                                                            signupfieldopac=0.0;
-                                                            onsignupclick=false;
-                                                            onsubmit=false;
-                                                          }
-                                                          else {
-                                                            setState(() {
-                                                              _autoValidate = true;
-                                                              loading=true;
-                                                            });
-                                                          }
-
-                                                        });
-                                                      },
-                                                    ),
-                                                  ):Container(),
-
-                                                  onsignupclick?
-                                                  Padding(
-                                                    padding: const EdgeInsets.only(right:5.0,top:15.0,bottom:8.0),
-                                                    child: MaterialButton(
-                                                      color:Colors.blueGrey,
-                                                      elevation: 10.0,
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius: BorderRadius.all(Radius.circular(5.0)),
-                                                      ),
-                                                      child: Padding(
-                                                        padding: const EdgeInsets.symmetric(horizontal:8.0,vertical:8.0),
-                                                        child: Text("Return",style:TextStyle(fontSize: MediaQuery.of(context).size.width*0.05,fontWeight: FontWeight.w600,color: Colors.white)),
-                                                      ),
-                                                      onPressed: (){
-                                                        setState(() {
-                                                          onsignupclick=false;
-                                                          onsubmit=false;
-                                                        });
-                                                      },
-                                                    ),
-                                                  ):Container(),
-
-                                                  onsubmit==false?
-                                                  Padding(
-                                                    padding: const EdgeInsets.only(top:15.0,bottom:8.0),
-                                                    child: MaterialButton(
-                                                      color:Colors.lightBlueAccent,
-                                                      elevation: 10.0,
-                                                      shape: RoundedRectangleBorder(
-                                                        borderRadius: BorderRadius.all(Radius.circular(5.0)),
-                                                      ),
-                                                      child: Padding(
-                                                        padding: const EdgeInsets.symmetric(horizontal:8.0,vertical:8.0),
-                                                        child: Text("Signup",style:TextStyle(fontSize: MediaQuery.of(context).size.width*0.05,fontWeight: FontWeight.w600,color: Colors.white)),
-                                                      ),
-                                                      onPressed: (){
-                                                        setState(() {
-                                                          signupfieldopac=1.0;
-                                                          onsignupclick=true;
-                                                          onsubmit=true;
-                                                        });
-                                                      },
-                                                    ),
-                                                  ):Container(),
-                                                ],
                                               ),
                                             ],
                                           ),
                                         ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              }
-                          );
-                        }
-                    );
-                  }
-                });
-              },
-            ),
+                                      );
+                                    }
+                                  ));
+                                }
+                            ),
+                          ),
+                        ),
 
-            FloatingActionButton(
-              heroTag: Timestamp.now().microsecondsSinceEpoch,
-              child: Icon(Icons.share),
-              onPressed: ()=> share(context,widget.videoCardDetails),
-            ),
+                        Container(
+                          width: 50,height: 50,
+                          child: FloatingActionButton(
+                            heroTag: Timestamp.now().microsecondsSinceEpoch,
+                            backgroundColor: favourite? Colors.white:Colors.blue,
+                            child: !favourite?Icon(Icons.favorite):Icon(Icons.favorite,color: Colors.red,),
+                            onPressed: () {
+                              setState(() {
+                                if(favourite==false){
+                                  favourite=true;
+                                  widget.videoCardDetails.likes++;
+                                  Firestore.instance.collection("allPosts").document(widget.videoCardDetails.id.toString()).updateData({
+                                    'likes':widget.videoCardDetails.likes,
+                                  });
+                                  Firestore.instance.collection('favourites').document(loggedInEmail).collection("likedVideos").document("${widget.videoCardDetails.id}").setData({
+                                    'title':widget.videoCardDetails.title,
+                                    'postedby':widget.videoCardDetails.postedby,
+                                    'link':widget.videoCardDetails.link,
+                                    'id':widget.videoCardDetails.id,
+                                    'timestamp':Timestamp.now(),
+                                    "type":widget.videoCardDetails.type,
+                                    'subpara':widget.videoCardDetails.subpara,
+                                    'likes':widget.videoCardDetails.likes
+                                  });
+                                }
+                                else if(favourite==true){
+                                  favourite=false;
+                                  widget.videoCardDetails.likes--;
+                                  Firestore.instance.collection("allPosts").document(widget.videoCardDetails.id).updateData({
+                                    'likes':widget.videoCardDetails.likes,
+                                  });
+                                  Firestore.instance.collection('favourites').document(loggedInEmail).collection("likedVideos").document("${widget.videoCardDetails.id}").delete();
+                                }
 
-            FloatingActionButton(
-              heroTag: Timestamp.now().microsecondsSinceEpoch,
-              onPressed: () {
-                setState(() {
-                  _controller.value.isPlaying
-                      ? _controller.pause()
-                      : _controller.play();
-                });
-              },
-              child: Icon(
-                _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                              });
+                            },
+                          ),
+                        ),
+
+                        Container(
+                          width: 50,height: 50,
+                          child: FloatingActionButton(
+                            heroTag: Timestamp.now().microsecondsSinceEpoch,
+                            child: Icon(Icons.share),
+                            onPressed: ()=> share(context,widget.videoCardDetails),
+                          ),
+                        ),
+
+                        if(widget.videoCardDetails.type=="video")
+                          Container(
+                            width: 50,height: 50,
+                            child: FloatingActionButton(
+                              heroTag: Timestamp.now().microsecondsSinceEpoch,
+                              onPressed: () {
+                                setState(() {
+                                  _controller.value.isPlaying
+                                      ? _controller.pause()
+                                      : _controller.play();
+                                });
+                              },
+                              child: Icon(
+                                _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
+              Padding(
+                padding: const EdgeInsets.all(4.0),
+                child: ListTile(
+                  trailing: Icon(Icons.image,size: 30,),
+                  title:Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text("${widget.videoCardDetails.title}",style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.05,fontWeight: FontWeight.w700,),),
+                      Text("by ${widget.videoCardDetails.postedby}",style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.048,fontWeight: FontWeight.w600),),
+                    ],
+                  ),
+                  subtitle:Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text("${widget.videoCardDetails.subpara}",overflow:overflow,style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.05,fontWeight: FontWeight.w400),),
+                      overflow==TextOverflow.ellipsis?
+                      InkWell(
+                        onTap:(){
+                          setState(() {
+                            overflow=TextOverflow.visible;
+                          });
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical:4.0),
+                          child: Container(
+                            decoration: BoxDecoration(color: Colors.blueAccent,borderRadius: BorderRadius.circular(8)),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal:8.0,vertical: 4),
+                              child: Text("More",style: GoogleFonts.happyMonkey(color: Colors.white,fontSize: 16),),
+                            ),
+                          ),
+                        ),
+                      ): InkWell(
+                        onTap:(){
+                          setState(() {
+                            overflow=TextOverflow.ellipsis;
+                          });
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical:4.0),
+                          child: Container(
+                            decoration: BoxDecoration(color: Colors.blueAccent,borderRadius: BorderRadius.circular(8)),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal:8.0,vertical: 4),
+                              child: Text("Collapse",style: GoogleFonts.happyMonkey(color: Colors.white,fontSize: 16),),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Row(
+                        children: <Widget>[
+                          Icon(Icons.favorite,size: 25.0,color: Colors.redAccent,),
+                          Text("${widget.videoCardDetails.likes}",style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.048,fontWeight: FontWeight.w600,),),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            ],
+          ),
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _controller.dispose();
   }
 }
 
@@ -762,19 +1001,35 @@ class Comments extends StatefulWidget {
 class _CommentsState extends State<Comments> {
   @override
   Widget build(BuildContext context) {
-    return Card(
-      color: Colors.blueAccent,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.all(Radius.circular(12)),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Row(
-          children: <Widget>[
-            Expanded(child: Text("${widget.comment}",style: TextStyle(color:Colors.white,fontSize: MediaQuery.of(context).size.width*0.045,fontWeight:FontWeight.w500),textAlign: TextAlign.left,)),
-          ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal:8.0,vertical: 8),
+      child: Container(
+        width: MediaQuery.of(context).size.width,
+        alignment: widget.comment.toString().contains(loggedInEmail)?Alignment.topRight:Alignment.topLeft,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth:MediaQuery.of(context).size.width*0.7,
+          ),
+          child: Card(
+            color: widget.comment.toString().contains(loggedInEmail)?Colors.blueAccent:Colors.black45,
+            shape: RoundedRectangleBorder(
+              borderRadius: widget.comment.toString().contains(loggedInEmail)?BorderRadius.only(topRight:Radius.circular(12),
+              topLeft:Radius.circular(12),bottomLeft:Radius.circular(12)):
+              BorderRadius.only(topRight:Radius.circular(12),
+                  topLeft:Radius.circular(12),bottomRight:Radius.circular(12))
+              ,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                children: <Widget>[
+                  Expanded(child: Text("${widget.comment}",style: GoogleFonts.happyMonkey(color:Colors.white,fontSize: MediaQuery.of(context).size.width*0.045,fontWeight:FontWeight.w500),textAlign: TextAlign.left,)),
+                ],
+              ),
+            ),),
         ),
-      ),);
+      ),
+    );
   }
 }
 
@@ -787,7 +1042,7 @@ class MyBottomNavigationBar extends StatefulWidget {
   @override
   _MyBottomNavigationBarState createState() => _MyBottomNavigationBarState();
 }
-
+int _currentIndex=0;
 class _MyBottomNavigationBarState extends State<MyBottomNavigationBar> {
   //final _formKey = GlobalKey<FormState>();
   final searchFieldController=TextEditingController();
@@ -804,35 +1059,48 @@ class _MyBottomNavigationBarState extends State<MyBottomNavigationBar> {
   bool requestingotp=false;
   bool phoneregistered=true;
   //bool _autoValidate = false;
-  int _currentIndex=0;
+  @override
+  void initState() {
+    // TODO: implement initState
+    if(widget.currentState!=null){
+      setState(() {
+        _currentIndex=widget.currentState;
+      });
+    }
+    super.initState();
+  }
   @override
   Widget build(BuildContext context) {
     List<Widget> _children=[
-      Homepage(),
+      SafeArea(child: Homepage(widget.rememberMe)),
       Material(child: ImageCapture()),
-      FavScreen(),
+      StreamBuilder(
+          stream: Firestore.instance.collection("users").document(loggedInEmail).snapshots(),
+          builder: (context, snapshot) {
+            return snapshot.hasData?Social(snapshot.data['email'],snapshot.data['name'], snapshot.data['photoURL']):Center(child: Container(width:30,height: 30,child: CircularProgressIndicator(strokeWidth: 4,backgroundColor: Colors.white,)));
+          }
+      ),
       Profile(email: widget.username,rememberMe: widget.rememberMe,),
     ];
-    return SafeArea(
-      child: Scaffold(
-        body:_children[_currentIndex],
-        bottomNavigationBar: CurvedNavigationBar(
-            backgroundColor: Colors.white,
-            color: Colors.blueAccent,
-            animationCurve: Curves.fastOutSlowIn,
-            height: 55,
-            items: <Widget>[
-              Icon(Icons.home,color: Colors.white,),
-              Icon(Icons.add,color: Colors.white,),
-              Icon(Icons.favorite,color: Colors.white,),
-              Icon(Icons.account_circle,color: Colors.white,),
-            ],
-            onTap: (index) {
-              setState(() {
-                _currentIndex=index;
-              });
-            }
-        ),
+    return Scaffold(
+      body:_children[_currentIndex],
+      bottomNavigationBar: CurvedNavigationBar(
+          backgroundColor: Color.fromARGB(0, 0, 0, 0),
+          color: Colors.blueAccent,
+          animationCurve: Curves.fastOutSlowIn,
+          height: 55,
+          index: _currentIndex,
+          items: <Widget>[
+            Icon(Icons.home,color: Colors.white,),
+            Icon(Icons.add,color: Colors.white,),
+            Icon(Icons.favorite,color: Colors.white,),
+            Icon(Icons.account_circle,color: Colors.white,),
+          ],
+          onTap: (index) {
+            setState(() {
+              _currentIndex=index;
+            });
+          }
       ),
     );
   }
