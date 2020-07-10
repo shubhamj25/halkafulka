@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_advanced_networkimage/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:halkaphulka1/home.dart';
+import 'package:halkaphulka1/searchUser.dart';
 
 import 'custom_icons_icons.dart';
 
@@ -14,7 +15,8 @@ List<FollowRequestCard> requests=[];
 List<ChatCard> chats=[];
 class Social extends StatefulWidget {
   final String userEmail,userName,img;
-  Social(this.userEmail,this.userName,this.img);
+  final int currentIndex;
+  Social({this.userEmail,this.userName,this.img, this.currentIndex});
   @override
   _SocialState createState() => _SocialState();
 }
@@ -34,8 +36,11 @@ class _SocialState extends State<Social> {
     return Scaffold(
         body: DefaultTabController(
             length: 4,
+            initialIndex: widget.currentIndex!=null?widget.currentIndex:0,
             child: Scaffold(
               appBar: AppBar(
+                leading: Icon(Icons.chat),
+                actions: <Widget>[widget.currentIndex!=null?IconButton(icon:Icon(Icons.close,color: Colors.white,),onPressed: ()=>Navigator.pop(context)):Container()],
                 centerTitle: true,
                 backgroundColor: Colors.pink,
                 bottom: TabBar(
@@ -49,7 +54,7 @@ class _SocialState extends State<Social> {
                   ],
                 ),
                 title: Text(
-                  "Friends & Followers",
+                  widget.currentIndex==0?"Add Friends":widget.currentIndex==3?"Text a friend":"Friends & Followers",
                   style: GoogleFonts.balooBhaina(
                       color: Colors.white, fontWeight: FontWeight.bold, fontSize: 25.0),
                 ),
@@ -67,7 +72,7 @@ class _SocialState extends State<Social> {
                             Material(
                               child: TextFormField(
                                 controller: searchController,
-                                style: GoogleFonts.aBeeZee(color:Colors.black,fontSize:18.0),
+                                style: GoogleFonts.happyMonkey(color:Colors.black,fontSize:18.0),
                                 onChanged: (String value){
                                   setState(() {
                                     friendName=value;
@@ -114,9 +119,9 @@ class _SocialState extends State<Social> {
                                   ),
                                 ):Center(
                                   child: Padding(
-                                    padding: const EdgeInsets.all(100.0),
+                                    padding: const EdgeInsets.symmetric(vertical:40.0),
                                     child: Text("No Friends Available",style: GoogleFonts.balooBhaina(
-                                        color: Colors.black, fontSize: 20.0),
+                                        color: Colors.grey, fontSize: 20.0),
                                     ),
                                   ),
                                 )
@@ -161,9 +166,9 @@ class _SocialState extends State<Social> {
                                   ),
                                 ):Center(
                                   child: Padding(
-                                    padding: const EdgeInsets.symmetric(vertical:100.0,horizontal: 32),
+                                    padding: const EdgeInsets.symmetric(vertical:40.0),
                                     child: Text("No Current Followers",style: GoogleFonts.balooBhaina(
-                                        color: Colors.black, fontSize: 20.0),
+                                        color: Colors.grey, fontSize: 20.0),
                                     ),
                                   ),
                                 )
@@ -209,9 +214,9 @@ class _SocialState extends State<Social> {
                                   ),
                                 ):Center(
                                   child: Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal:32.0,vertical: 100),
+                                    padding: const EdgeInsets.symmetric(vertical:40.0),
                                     child: Text("No Follow Requests",style: GoogleFonts.balooBhaina(
-                                        color: Colors.black, fontSize: 20.0),
+                                        color: Colors.grey, fontSize: 20.0),
                                     ),
                                   ),
                                 )
@@ -241,7 +246,7 @@ class _SocialState extends State<Social> {
                                       contact=value;
                                     });
                                   },
-                                  style: GoogleFonts.aBeeZee(color:Colors.black,fontSize:18.0),
+                                  style: GoogleFonts.happyMonkey(color:Colors.black,fontSize:18.0),
                                   decoration: InputDecoration(
                                     hintText: "Search Contact...",
                                     contentPadding: EdgeInsets.symmetric(horizontal: 32.0,vertical: 14.0),
@@ -336,7 +341,7 @@ class _UserCardState extends State<UserCard> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.all((Radius.circular(8.0))),
           ),
-          elevation: 8.0,
+          elevation:2.0,
           child:Container(
             decoration: BoxDecoration(
               color: Colors.white,
@@ -456,7 +461,7 @@ class _FollowRequestCardState extends State<FollowRequestCard> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal:8.0),
       child: Material(
-        elevation: 8.0,
+        elevation:2.0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),
@@ -492,7 +497,7 @@ class _FollowRequestCardState extends State<FollowRequestCard> {
                 ),
               ),
               title: Text("Follow request from ${widget.email}",style: GoogleFonts.happyMonkey(fontSize: 14,fontWeight: FontWeight.w600),),
-              subtitle: Text("${widget.name} has requested to follow you",style: GoogleFonts.aBeeZee(fontSize: 13,fontWeight: FontWeight.w500)),
+              subtitle: Text("${widget.name} has requested to follow you",style: GoogleFonts.happyMonkey(fontSize: 13,fontWeight: FontWeight.w500)),
             ),
             Container(
               width: MediaQuery.of(context).size.width,
@@ -609,13 +614,18 @@ class _FollowerState extends State<Follower> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.all((Radius.circular(8.0))),
           ),
-          elevation: 15.0,
+          elevation:2.0,
           child:Container(
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.all(Radius.circular(8.0)),
             ),
             child: ListTile(
+              onTap: (){
+                Navigator.push(context,MaterialPageRoute(builder: (context){
+                  return SearchProfile(email: widget.userEmail,);
+                }));
+              },
               trailing: IconButton(
                 icon:  Icon(inTouch?Icons.touch_app:Icons.send,color: Colors.blueAccent),
                 onPressed:(){
@@ -630,7 +640,7 @@ class _FollowerState extends State<Follower> {
                                 padding: const EdgeInsets.symmetric(horizontal:8.0),
                                 child: Icon(Icons.info,color: Colors.white,size: 35,),
                               ),
-                              Expanded(child: Text("You have a new Chat !\nPlease check your chat list",style: GoogleFonts.aBeeZee(fontSize: 16.0,color: Colors.white),))
+                              Expanded(child: Text("You have a new Chat !\nPlease check your chat list",style: GoogleFonts.happyMonkey(fontSize: 16.0,color: Colors.white),))
                             ],
                           ),
                         )
@@ -646,7 +656,7 @@ class _FollowerState extends State<Follower> {
                                 padding: const EdgeInsets.symmetric(horizontal:8.0),
                                 child: Icon(Icons.info,color: Colors.white,size: 35,),
                               ),
-                              Expanded(child: Text("Already in Touch!\nPlease check your chat list",style: GoogleFonts.aBeeZee(fontSize: 16.0,color: Colors.white),))
+                              Expanded(child: Text("Already in Touch!\nPlease check your chat list",style: GoogleFonts.happyMonkey(fontSize: 16.0,color: Colors.white),))
                             ],
                           ),
                         )
@@ -728,7 +738,7 @@ class _ChatCardState extends State<ChatCard> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.all(Radius.circular(8.0)),
         ),
-        elevation: 8.0,
+        elevation:2.0,
         child: ListTile(
           leading:Material(
             shape: CircleBorder(),
@@ -782,7 +792,7 @@ class _ChatCardState extends State<ChatCard> {
                         ),
                         child: Padding(
                           padding: const EdgeInsets.all(5.0),
-                          child: Text("$unseen",style: GoogleFonts.aBeeZee(fontSize: 14,color: Colors.white),),
+                          child: Text("$unseen",style: GoogleFonts.happyMonkey(fontSize: 14,color: Colors.white),),
                         ),
                       ):Icon(organizer?Icons.live_help:Icons.notifications);
                     }
@@ -810,7 +820,7 @@ class _ChatCardState extends State<ChatCard> {
                   builder: (context){
                     return Scaffold(
                       appBar: AppBar(
-                        title: Text(widget.chatToName,style: GoogleFonts.aBeeZee(color: Colors.white),),
+                        title: Text(widget.chatToName,style: GoogleFonts.happyMonkey(color: Colors.white),),
                         backgroundColor: deepRed,
                         leading: IconButton(
                           icon: Icon(Icons.close),
@@ -861,7 +871,7 @@ class _ChatCardState extends State<ChatCard> {
                               color: Colors.white,
                               child: TextFormField(
                                 controller: _messageController,
-                                style: GoogleFonts.aBeeZee(fontSize: MediaQuery.of(context).size.width*0.05,color:Colors.black,fontWeight: FontWeight.w500),
+                                style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.05,color:Colors.black,fontWeight: FontWeight.w500),
                                 decoration: InputDecoration(
                                   labelStyle:GoogleFonts.balooBhaina(fontSize: 16),
                                   labelText: "Type a message",
@@ -988,10 +998,10 @@ class _ChatState extends State<Chat> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: <Widget>[
-                    Text(widget.message,style: GoogleFonts.aBeeZee(fontSize: 18.0,fontWeight: FontWeight.w500,color: Colors.white),),
+                    Text(widget.message,style: GoogleFonts.happyMonkey(fontSize: 18.0,fontWeight: FontWeight.w500,color: Colors.white),),
                     Padding(
                       padding: const EdgeInsets.only(top:2.0),
-                      child: Text("${widget.timestamp.day} ${month(widget.timestamp.month)}@${widget.timestamp.hour}:${widget.timestamp.minute} hrs",textAlign: TextAlign.right,style: GoogleFonts.aBeeZee(color: Colors.white,fontSize: 10.0),),
+                      child: Text("${widget.timestamp.day} ${month(widget.timestamp.month)}@${widget.timestamp.hour}:${widget.timestamp.minute} hrs",textAlign: TextAlign.right,style: GoogleFonts.happyMonkey(color: Colors.white,fontSize: 10.0),),
                     )
                   ],
                 ),

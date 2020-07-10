@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 import 'login.dart';
 
 Future<void> main() async{
+  ErrorWidget.builder = (FlutterErrorDetails details) => Container();
   WidgetsFlutterBinding.ensureInitialized();
   await FirebaseApp.configure(
       name:'Halka-Phulka',

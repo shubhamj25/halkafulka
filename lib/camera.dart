@@ -357,15 +357,16 @@ class _ImageCaptureState extends State<ImageCapture> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: <Widget>[
 
-                        FlatButton.icon(icon: Icon(Icons.play_circle_filled),
+                        FlatButton.icon(icon: Icon(_videoPlayerController.value.isPlaying?Icons.pause_circle_filled:Icons.play_circle_filled),
                           onPressed:(){
                             setState(() {
                                 setState(() {
-                                  _videoPlayerController.play();
+                                  _videoPlayerController.value.isPlaying?
+                                  _videoPlayerController.pause():_videoPlayerController.play();
                                 });
                             });
                           },
-                          label: Text("Play",
+                          label: Text(_videoPlayerController.value.isPlaying?"Pause":"Play",
                             style: GoogleFonts.balooBhai(),
                           ),),
                         FlatButton.icon(icon: Icon(Icons.delete),onPressed:(){

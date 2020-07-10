@@ -1,4 +1,3 @@
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:camera/camera.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -16,6 +15,7 @@ import 'package:progress_indicators/progress_indicators.dart';
 import 'package:share/share.dart';
 import 'package:video_player/video_player.dart';
 import 'camera.dart';
+import 'notifications.dart';
 String loggedInEmail;
 String loggedInPassword;
 Color deepRed=Color.fromRGBO(253, 11, 23, 1);
@@ -54,106 +54,111 @@ class _HomepageState extends State<Homepage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        body:SingleChildScrollView(
-          child: Column(
-            children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    IconButton(icon: Icon(Icons.add_a_photo,color: Colors.indigoAccent,size: 30,),
-                    onPressed: (){
-                      setState(() {
-                        Navigator.pushReplacement(context, MaterialPageRoute(
-                          builder: (context){
-                            return MyBottomNavigationBar(currentState: 1,username: loggedInEmail,rememberMe: widget.rememberMe,);
+    return SafeArea(
+      child: Scaffold(
+          body:SingleChildScrollView(
+            child: Column(
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal:8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: <Widget>[
+                      IconButton(icon: Icon(Icons.add_a_photo,color: Colors.indigoAccent,size: 30,),
+                      onPressed: (){
+                        setState(() {
+                          Navigator.pushReplacement(context, MaterialPageRoute(
+                            builder: (context){
+                              return MyBottomNavigationBar(currentState: 1,username: loggedInEmail,rememberMe: widget.rememberMe,);
+                            }
+                          ));
+                        });
+                      },
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Text("Halka Fulka",style: GoogleFonts.happyMonkey(fontSize: 25,color:Color.fromARGB(170, 0, 0, 0),fontWeight: FontWeight.bold),),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal:8.0),
+                        child: StreamBuilder(
+                          stream: Firestore.instance.collection("users").document(loggedInEmail).snapshots(),
+                          builder: (context, snapshot) {
+                            return snapshot.hasData?
+                            snapshot.data['photoURL']!=null?Material(
+                              shape: CircleBorder(),
+                              child: Container(
+                                  width: 35,
+                                  height: 35,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child:CachedNetworkImage(
+                                      fadeInDuration: Duration(milliseconds: 500),
+                                      fadeInCurve: Curves.easeIn,
+                                      imageUrl: snapshot.data['photoURL'],
+                                      fit: BoxFit.fill,
+                                      imageBuilder: (context, imageProvider) => Container(
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          image: DecorationImage(
+                                              image: imageProvider, fit: BoxFit.cover),
+                                        ),
+                                      ),
+                                      placeholder: (context, url) => Center(
+                                        child: HeartbeatProgressIndicator(
+                                          child: Icon(Icons.account_circle,size: 25,color: Colors.grey,),
+                                        ),
+                                      ),
+                                      errorWidget: (context, url, error) => Icon(Icons.image,size: 25,color: Colors.blueAccent,)
+                                  )
+                              ),
+                            ):
+                            Icon(Icons.account_circle,size: 25,color: Colors.blueAccent,)
+                            :HeartbeatProgressIndicator(
+                              child: Icon(Icons.account_circle,size: 25,color: Colors.grey,),
+                            );
                           }
-                        ));
-                      });
-                    },
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Text("Halka Fulka",style: GoogleFonts.happyMonkey(fontSize: 25,color:Color.fromARGB(170, 0, 0, 0),fontWeight: FontWeight.bold),),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal:8.0),
-                      child: StreamBuilder(
-                        stream: Firestore.instance.collection("users").document(loggedInEmail).snapshots(),
-                        builder: (context, snapshot) {
-                          return snapshot.hasData?
-                          snapshot.data['photoURL']!=null?Material(
-                            shape: CircleBorder(),
-                            child: Container(
-                                width: 35,
-                                height: 35,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                ),
-                                child:CachedNetworkImage(
-                                    fadeInDuration: Duration(milliseconds: 500),
-                                    fadeInCurve: Curves.easeIn,
-                                    imageUrl: snapshot.data['photoURL'],
-                                    fit: BoxFit.fill,
-                                    imageBuilder: (context, imageProvider) => Container(
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        image: DecorationImage(
-                                            image: imageProvider, fit: BoxFit.cover),
-                                      ),
-                                    ),
-                                    placeholder: (context, url) => Center(
-                                      child: HeartbeatProgressIndicator(
-                                        child: Icon(Icons.account_circle,size: 25,color: Colors.grey,),
-                                      ),
-                                    ),
-                                    errorWidget: (context, url, error) => Icon(Icons.image,size: 25,color: Colors.blueAccent,)
-                                )
-                            ),
-                          ):
-                          Icon(Icons.account_circle,size: 25,color: Colors.blueAccent,)
-                          :HeartbeatProgressIndicator(
-                            child: Icon(Icons.account_circle,size: 25,color: Colors.grey,),
-                          );
-                        }
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              StreamBuilder<QuerySnapshot>(
-                  stream: Firestore.instance.collection("allPosts").orderBy("timestamp",descending: true).snapshots(),
-                  builder: (context, snapshot){
-                    return !snapshot.hasData?Padding(
-                      padding: const EdgeInsets.all(32.0),
-                      child: Center(child: Container(width: 27,height: 27,child: CircularProgressIndicator(backgroundColor: Colors.white,strokeWidth: 2,))),
-                    ):
-                    snapshot.data.documents.isNotEmpty?
-                    Container(
-                      height: MediaQuery.of(context).size.height*0.85,
-                      child: Swiper(
-                        itemBuilder: (context,i){
-                          return VideoApp(videoCardDetails: VideoCardDetails.fromSnapshot(snapshot.data.documents[i]),);
-                        },
-                        itemCount: snapshot.data.documents.length,
-                        pagination: SwiperPagination(),
-                      ),
-                    ):Column(
-                      children: <Widget>[
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical:32.0),
-                          child: Text("No Recent Posts",style: GoogleFonts.happyMonkey(fontSize: 20),),
-                        )
-                      ],
-                    );
-                  }
-              ),
-              SizedBox(height: 40,)
-            ],
-          ),
-        )
+                StreamBuilder<QuerySnapshot>(
+                    stream: Firestore.instance.collection("allPosts").orderBy("timestamp",descending: true).snapshots(),
+                    builder: (context, snapshot){
+                      return !snapshot.hasData?Padding(
+                        padding: const EdgeInsets.all(32.0),
+                        child: Center(child: Container(width: 27,height: 27,child: CircularProgressIndicator(backgroundColor: Colors.white,strokeWidth: 2,))),
+                      ):
+                      snapshot.data.documents.isNotEmpty?
+                      Container(
+                        height: MediaQuery.of(context).size.height*0.78,
+                        child: Swiper(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          itemBuilder: (context,i){
+                            return VideoApp(videoCardDetails: VideoCardDetails.fromSnapshot(snapshot.data.documents[i]),);
+                          },
+                          itemCount: snapshot.data.documents.length,
+                          scrollDirection: Axis.vertical,
+                          scale: 0.9,
+                          curve: Curves.decelerate,
+                        ),
+                      ):Column(
+                        children: <Widget>[
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical:32.0),
+                            child: Text("No Recent Posts",style: GoogleFonts.happyMonkey(fontSize: 20),),
+                          )
+                        ],
+                      );
+                    }
+                ),
+                SizedBox(height: 40,)
+              ],
+            ),
+          )
+      ),
     );
   }
 }
@@ -216,6 +221,7 @@ class _VideoAppState extends State<VideoApp> {
 
   @override
   void initState() {
+    myFocusNode = FocusNode();
     Firestore.instance.collection('favourites').document(loggedInEmail).collection("likedVideos").document(widget.videoCardDetails.id).get().then((doc){
       if(doc.exists){
         setState(() {
@@ -248,17 +254,24 @@ class _VideoAppState extends State<VideoApp> {
   @override
   void dispose() {
     // TODO: implement dispose
-    _controller.dispose();
-    _controller2.dispose();
+    if(widget.videoCardDetails.type=="video"){
+      _controller.dispose();
+    }
+    if(widget.videoCardDetails.type2=="video"){
+      _controller2.dispose();
+    }
+    myFocusNode.dispose();
     super.dispose();
   }
+
+  FocusNode myFocusNode;
+
   @override
   Widget build(BuildContext context) {
     return widget.videoCardDetails.type=="video"?
     Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Material(
-        elevation: 8,
+      padding: const EdgeInsets.symmetric(horizontal:8.0),
+      child:Material(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
         ),
@@ -384,113 +397,100 @@ class _VideoAppState extends State<VideoApp> {
                                 heroTag: Timestamp.now().microsecondsSinceEpoch,
                                 child: Icon(Icons.comment),
                                 onPressed: () {
-                                  showDialog (
-                                    context:context,
-                                    builder:(context) {
-                                      return StatefulBuilder(
-                                          builder: (context, setState) {
-                                            return AlertDialog(
-                                              shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.all(Radius.circular(12.0))),
-                                              content: SingleChildScrollView(
-                                                child: Column(
-                                                  children: <Widget>[
-                                                    Row(
-                                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                      children: <Widget>[
-                                                        Row(
-                                                          children: <Widget>[
-                                                            Padding(
-                                                              padding: const EdgeInsets.all(8.0),
-                                                              child: Icon(Icons.edit,size: 20.0),
-                                                            ),
-                                                            Padding(
-                                                              padding: const EdgeInsets.all(8.0),
-                                                              child: Text("Comments",style:GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.05,fontWeight: FontWeight.w600)),
-                                                            ),
-                                                          ],
-                                                        ),
-
-                                                        Padding(
-                                                          padding: const EdgeInsets.all(8.0),
-                                                          child: IconButton(
-                                                            icon: Icon(Icons.close,size: 20.0,),
+                                  Navigator.push(context,MaterialPageRoute(
+                                      builder: (context){
+                                        return  SafeArea(
+                                          child: Scaffold(
+                                            body: Stack(
+                                              alignment: Alignment.bottomCenter,
+                                              children: <Widget>[
+                                                SingleChildScrollView(
+                                                  child: Column(
+                                                    children: <Widget>[
+                                                      SizedBox(height: 10,),
+                                                      ListTile(
+                                                          leading:Icon(Icons.edit,),
+                                                          title:Text("Comments",style:GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.05,fontWeight: FontWeight.w600)),
+                                                          subtitle: Text("${widget.videoCardDetails.title}\nby ${widget.videoCardDetails.postedby}",style: GoogleFonts.happyMonkey(fontSize: 14),),
+                                                          trailing:IconButton(
+                                                            icon: Icon(Icons.close,size: 20.0,color: deepRed,),
                                                             onPressed: (){
                                                               Navigator.pop(context);
                                                             },
-                                                          ),
-                                                        )
-                                                      ],
-                                                    ),
-
-                                                    Padding(
-                                                      padding: const EdgeInsets.symmetric(vertical: 3.0),
-                                                      child: Material(
-                                                        elevation: 12.0,
-                                                        color: Colors.white,
-                                                        shape: RoundedRectangleBorder(
-                                                          borderRadius: BorderRadius.all(Radius.circular(10.0)),
-                                                        ),
-                                                        child: SizedBox(
-                                                          width: 230.0,
-                                                          child: TextFormField(
-                                                            controller: commentController,
-                                                            style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.045,color:Colors.black,fontWeight: FontWeight.w700),
-                                                            decoration: InputDecoration(
-                                                              labelText: "Comment",
-                                                              contentPadding: EdgeInsets.symmetric(horizontal: 8.0,vertical: 4.0),
-                                                              suffixIcon: IconButton(icon:Icon(Icons.send,color: Colors.black,),
-                                                                onPressed: (){
-                                                                  setState(() {
-                                                                    String comment=commentController.text;
-                                                                    Firestore.instance.collection("comments").document('${widget.videoCardDetails.id}_comments').get().then((doc){
-                                                                      if(doc.exists){
-                                                                        Firestore.instance.collection("comments").document('${widget.videoCardDetails.id}_comments').updateData({
-                                                                          'comments':FieldValue.arrayUnion(['$comment\n~ ${signedin['username']}']),
-                                                                        });
-                                                                      }
-                                                                      else{
-                                                                        Firestore.instance.collection("comments").document('${widget.videoCardDetails.id}_comments').setData({
-                                                                          'comments':FieldValue.arrayUnion(['$comment\n~ ${signedin['username']}']),
-                                                                        });
-                                                                      }
-                                                                    });
-                                                                    commentController.clear();
-                                                                  });
-                                                                },),
-                                                              border: InputBorder.none,
-                                                            ),
-
-                                                          ),
+                                                          )
+                                                      ),
+                                                      Container(
+                                                        width: MediaQuery.of(context).size.width,
+                                                        height:  MediaQuery.of(context).size.height,
+                                                        child:  StreamBuilder<QuerySnapshot>(
+                                                            stream: Firestore.instance.collection("comments").document(widget.videoCardDetails.id).collection("comments").orderBy('timestamp',descending:true).snapshots(),
+                                                            builder: (context,snapshot) {
+                                                              return !snapshot.hasData? Center(child: CircularProgressIndicator(backgroundColor: Colors.white,strokeWidth: 2,)):
+                                                              snapshot.data.documents.isNotEmpty?ListView.builder(
+                                                                itemCount:snapshot.data.documents.length,
+                                                                itemBuilder: (BuildContext context,index){
+                                                                  return Comments(snapshot.data.documents.elementAt(index).data['comment'],
+                                                                      snapshot.data.documents.elementAt(index).data['by'],
+                                                                      snapshot.data.documents.elementAt(index).data['timestamp']);
+                                                                },
+                                                              ):Center(
+                                                                child: Text("No recent Comments",style: GoogleFonts.balooBhai(fontSize: 20,color: Colors.grey),),
+                                                              );
+                                                            }
                                                         ),
                                                       ),
-                                                    ),
-
-                                                    Container(
-                                                      height: 280.0,
-                                                      width: 300.0,
-                                                      child: StreamBuilder(
-                                                          stream: Firestore.instance.collection("comments").document('${widget.videoCardDetails.id}_comments').snapshots(),
-                                                          builder: (context,snapshot) {
-                                                            return !snapshot.hasData? Center(child: CircularProgressIndicator(backgroundColor: Colors.white,strokeWidth: 2,)):
-                                                            ListView.builder(
-                                                              itemCount:List.from(snapshot.data['comments']).length ,
-                                                              itemBuilder: (BuildContext context,index){
-                                                                return Comments(List.from(snapshot.data['comments']).reversed.elementAt(index));
-                                                              },
-                                                            );
-                                                          }
-                                                      ),
-                                                    ),
-                                                  ],
+                                                    ],
+                                                  ),
                                                 ),
-                                              ),
+                                                Form(
+                                                  key: _formKey,
+                                                  child: Material(
+                                                    elevation: 12.0,
+                                                    color: Colors.white,
+                                                    child: TextFormField(
+                                                      controller: commentController,
+                                                      validator:(val){
+                                                        if(val==""||val==null){
+                                                          return "Please enter something";
+                                                        }
+                                                        else{
+                                                          return null;
+                                                        }
+                                                      },
+                                                      style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.045,color:Colors.black),
+                                                      decoration: InputDecoration(
+                                                        labelText: "Add Comment",
+                                                        errorStyle:GoogleFonts.balooBhai(),
+                                                        border:InputBorder.none,
+                                                        contentPadding: EdgeInsets.symmetric(horizontal: 14.0,),
+                                                        suffixIcon: IconButton(icon:Icon(Icons.send,color: Colors.blueAccent,),
+                                                          onPressed: (){
+                                                            setState(() {
+                                                              String comment=commentController.text;
+                                                              Firestore.instance.collection("comments").document(widget.videoCardDetails.id).collection("comments").add({
+                                                                'comment':comment,
+                                                                'timestamp':Timestamp.now(),
+                                                                'by':loggedInEmail,
+                                                              }).then((value){
+                                                                Firestore.instance.collection("comments").document(widget.videoCardDetails.id).collection("comments").document(value.documentID).updateData({
+                                                                  'id':value.documentID
+                                                                });
+                                                              });
+                                                              commentController.clear();
+                                                            });
+                                                          }
+                                                          ,),
+                                                      ),
 
-                                            );
-                                          }
-                                      );
-                                    },
-                                  );
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                  ));
                                 }
                             ),
                           ),
@@ -520,6 +520,18 @@ class _VideoAppState extends State<VideoApp> {
                                     'subpara':widget.videoCardDetails.subpara,
                                     'likes':widget.videoCardDetails.likes
                                   });
+
+                                  Firestore.instance.collection("notifications").document(widget.videoCardDetails.postedby).collection("notifications_${widget.videoCardDetails.postedby}").add({
+                                    "message":"$loggedInEmail liked your post having title ${widget.videoCardDetails.title}",
+                                    "timestamp":DateTime.now().toIso8601String(),
+                                    "postId":widget.videoCardDetails.id,
+                                    "seen":false
+                                  }).then((value){
+                                    Firestore.instance.collection("notifications").document(widget.videoCardDetails.postedby).collection("notifications_${widget.videoCardDetails.postedby}").document(value.documentID).updateData({
+                                      "id":value.documentID,
+                                    });
+                                  });
+
                                 }
                                 else if(favourite==true){
                                   favourite=false;
@@ -528,6 +540,18 @@ class _VideoAppState extends State<VideoApp> {
                                     'likes':widget.videoCardDetails.likes,
                                   });
                                   Firestore.instance.collection("favourites").document(loggedInEmail).collection("likedVideos").document("${widget.videoCardDetails.id}").delete();
+
+                                  Firestore.instance.collection("notifications").document(widget.videoCardDetails.postedby).collection("notifications_${widget.videoCardDetails.postedby}").add({
+                                    "message":"$loggedInEmail disliked your post having title ${widget.videoCardDetails.title}",
+                                    "timestamp":DateTime.now().toIso8601String(),
+                                    "postId":widget.videoCardDetails.id,
+                                    "seen":false
+                                  }).then((value){
+                                    Firestore.instance.collection("notifications").document(widget.videoCardDetails.postedby).collection("notifications_${widget.videoCardDetails.postedby}").document(value.documentID).updateData({
+                                      "id":value.documentID,
+                                    });
+                                  });
+
                                 }
 
                               });
@@ -580,30 +604,65 @@ class _VideoAppState extends State<VideoApp> {
                   VideoProgressIndicator(_controller, allowScrubbing: true),
                 ],
               ),
-              ListTile(
-                trailing: Icon(Icons.video_library,size: 30,),
-                title:Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text("${widget.videoCardDetails.title}",style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.05,fontWeight: FontWeight.w700),),
-                    Text("by ${widget.videoCardDetails.postedby}",style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.048,fontWeight: FontWeight.w600),),
-                  ],
-                ),
-                subtitle:Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    ConstrainedBox(
-                        constraints:BoxConstraints(
-                          maxHeight: 100,
+              Focus(
+                focusNode: myFocusNode,
+                child: ListTile(
+                  trailing: Icon(Icons.video_library,size: 30,),
+                  title:Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text("${widget.videoCardDetails.title}",style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.048,fontWeight: FontWeight.w700),),
+                      Text("by ${widget.videoCardDetails.postedby}",style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.046,fontWeight: FontWeight.w600),),
+                    ],
+                  ),
+                  subtitle:Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text("${widget.videoCardDetails.subpara}",overflow:overflow,style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.046,fontWeight: FontWeight.w400),),
+                      overflow==TextOverflow.ellipsis?
+                      InkWell(
+                        onTap:(){
+                          setState(() {
+                            overflow=TextOverflow.visible;
+                            myFocusNode.requestFocus();
+                          });
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical:4.0),
+                          child: Container(
+                            decoration: BoxDecoration(color: Colors.blueAccent,borderRadius: BorderRadius.circular(8)),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal:8.0,vertical: 4),
+                              child: Text("More",style: GoogleFonts.happyMonkey(color: Colors.white,fontSize: 16),),
+                            ),
+                          ),
                         ),
-                        child: Text("${widget.videoCardDetails.subpara}",overflow: TextOverflow.fade,style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.05,fontWeight: FontWeight.w400),)),
-                    Row(
-                      children: <Widget>[
-                        Icon(Icons.favorite,size: 25.0,color: Colors.redAccent,),
-                        Text("${widget.videoCardDetails.likes}",style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.048,fontWeight: FontWeight.w600),),
-                      ],
-                    ),
-                  ],
+                      ): InkWell(
+                        onTap:(){
+                          setState(() {
+                            overflow=TextOverflow.ellipsis;
+                            myFocusNode.unfocus();
+                          });
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical:4.0),
+                          child: Container(
+                            decoration: BoxDecoration(color: Colors.blueAccent,borderRadius: BorderRadius.circular(8)),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal:8.0,vertical: 4),
+                              child: Text("Collapse",style: GoogleFonts.happyMonkey(color: Colors.white,fontSize: 16),),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Row(
+                        children: <Widget>[
+                          Icon(Icons.favorite,size: 25.0,color: Colors.redAccent,),
+                          Text("${widget.videoCardDetails.likes}",style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.048,fontWeight: FontWeight.w600,),),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
 
@@ -614,14 +673,14 @@ class _VideoAppState extends State<VideoApp> {
     )
         :
     Padding(
-      padding: const EdgeInsets.all(8.0),
+      padding: const EdgeInsets.symmetric(horizontal:8.0),
       child: Material(
-        elevation: 8,
+        color: Color.fromARGB(255, 250, 250, 250),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
         ),
         child: SingleChildScrollView(
-          child: Column(
+          child: Column(// new
             children: <Widget>[
               Material(
                 shape: RoundedRectangleBorder(
@@ -779,15 +838,19 @@ class _VideoAppState extends State<VideoApp> {
                                                     Container(
                                                       width: MediaQuery.of(context).size.width,
                                                       height:  MediaQuery.of(context).size.height,
-                                                      child: StreamBuilder(
-                                                          stream: Firestore.instance.collection("comments").document('${widget.videoCardDetails.id}_comments').snapshots(),
+                                                      child:  StreamBuilder<QuerySnapshot>(
+                                                          stream: Firestore.instance.collection("comments").document(widget.videoCardDetails.id).collection("comments").orderBy('timestamp',descending:true).snapshots(),
                                                           builder: (context,snapshot) {
-                                                            return !snapshot.hasData? Center(child: CircularProgressIndicator(backgroundColor: Colors.white,)):
-                                                            ListView.builder(
-                                                              itemCount:List.from(snapshot.data['comments']).length ,
+                                                            return !snapshot.hasData? Center(child: CircularProgressIndicator(backgroundColor: Colors.white,strokeWidth: 2,)):
+                                                            snapshot.data.documents.isNotEmpty?ListView.builder(
+                                                              itemCount:snapshot.data.documents.length,
                                                               itemBuilder: (BuildContext context,index){
-                                                                return Comments(List.from(snapshot.data['comments']).reversed.elementAt(index));
+                                                                return Comments(snapshot.data.documents.elementAt(index).data['comment'],
+                                                                    snapshot.data.documents.elementAt(index).data['by'],
+                                                                    snapshot.data.documents.elementAt(index).data['timestamp']);
                                                               },
+                                                            ):Center(
+                                                              child: Text("No recent Comments",style: GoogleFonts.balooBhai(fontSize: 20,color: Colors.grey),),
                                                             );
                                                           }
                                                       ),
@@ -810,7 +873,7 @@ class _VideoAppState extends State<VideoApp> {
                                                         return null;
                                                       }
                                                       },
-                                                    style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.045,color:Colors.black,fontWeight: FontWeight.w700),
+                                                    style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.045,color:Colors.black),
                                                     decoration: InputDecoration(
                                                       labelText: "Add Comment",
                                                       errorStyle:GoogleFonts.balooBhai(),
@@ -818,25 +881,21 @@ class _VideoAppState extends State<VideoApp> {
                                                       contentPadding: EdgeInsets.symmetric(horizontal: 14.0,),
                                                       suffixIcon: IconButton(icon:Icon(Icons.send,color: Colors.blueAccent,),
                                                         onPressed: (){
-                                                        if(_formKey.currentState.validate()){
                                                           setState(() {
                                                             String comment=commentController.text;
-                                                            Firestore.instance.collection("comments").document('${widget.videoCardDetails.id}_comments').get().then((doc){
-                                                              if(doc.exists){
-                                                                Firestore.instance.collection("comments").document('${widget.videoCardDetails.id}_comments').updateData({
-                                                                  'comments':FieldValue.arrayUnion(['$comment\n~ $loggedInEmail']),
-                                                                });
-                                                              }
-                                                              else{
-                                                                Firestore.instance.collection("comments").document('${widget.videoCardDetails.id}_comments').setData({
-                                                                  'comments':FieldValue.arrayUnion(['$comment\n~ $loggedInEmail']),
-                                                                },merge: true);
-                                                              }
+                                                            Firestore.instance.collection("comments").document(widget.videoCardDetails.id).collection("comments").add({
+                                                              'comment':comment,
+                                                              'timestamp':Timestamp.now(),
+                                                              'by':loggedInEmail,
+                                                            }).then((value){
+                                                              Firestore.instance.collection("comments").document(widget.videoCardDetails.id).collection("comments").document(value.documentID).updateData({
+                                                                'id':value.documentID
+                                                              });
                                                             });
                                                             commentController.clear();
                                                           });
                                                         }
-                                                        },),
+                                                        ,),
                                                     ),
 
                                                   ),
@@ -877,6 +936,16 @@ class _VideoAppState extends State<VideoApp> {
                                     'subpara':widget.videoCardDetails.subpara,
                                     'likes':widget.videoCardDetails.likes
                                   });
+                                  Firestore.instance.collection("notifications").document(widget.videoCardDetails.postedby).collection("notifications_${widget.videoCardDetails.postedby}").add({
+                                    "message":"$loggedInEmail liked your post having title ${widget.videoCardDetails.title}",
+                                    "timestamp":DateTime.now().toIso8601String(),
+                                    "postId":widget.videoCardDetails.id,
+                                    "seen":false
+                                  }).then((value){
+                                    Firestore.instance.collection("notifications").document(widget.videoCardDetails.postedby).collection("notifications_${widget.videoCardDetails.postedby}").document(value.documentID).updateData({
+                                      "id":value.documentID,
+                                    });
+                                  });
                                 }
                                 else if(favourite==true){
                                   favourite=false;
@@ -885,8 +954,17 @@ class _VideoAppState extends State<VideoApp> {
                                     'likes':widget.videoCardDetails.likes,
                                   });
                                   Firestore.instance.collection('favourites').document(loggedInEmail).collection("likedVideos").document("${widget.videoCardDetails.id}").delete();
+                                  Firestore.instance.collection("notifications").document(widget.videoCardDetails.postedby).collection("notifications_${widget.videoCardDetails.postedby}").add({
+                                    "message":"$loggedInEmail disliked your post having title ${widget.videoCardDetails.title}",
+                                    "timestamp":DateTime.now().toIso8601String(),
+                                    "postId":widget.videoCardDetails.id,
+                                    "seen":false
+                                  }).then((value){
+                                    Firestore.instance.collection("notifications").document(widget.videoCardDetails.postedby).collection("notifications_${widget.videoCardDetails.postedby}").document(value.documentID).updateData({
+                                      "id":value.documentID,
+                                    });
+                                  });
                                 }
-
                               });
                             },
                           ),
@@ -930,55 +1008,60 @@ class _VideoAppState extends State<VideoApp> {
                   title:Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Text("${widget.videoCardDetails.title}",style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.05,fontWeight: FontWeight.w700,),),
-                      Text("by ${widget.videoCardDetails.postedby}",style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.048,fontWeight: FontWeight.w600),),
+                      Text("${widget.videoCardDetails.title}",style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.048,fontWeight: FontWeight.w700,),),
+                      Text("by ${widget.videoCardDetails.postedby}",style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.046,fontWeight: FontWeight.w600),),
                     ],
                   ),
-                  subtitle:Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text("${widget.videoCardDetails.subpara}",overflow:overflow,style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.05,fontWeight: FontWeight.w400),),
-                      overflow==TextOverflow.ellipsis?
-                      InkWell(
-                        onTap:(){
-                          setState(() {
-                            overflow=TextOverflow.visible;
-                          });
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical:4.0),
-                          child: Container(
-                            decoration: BoxDecoration(color: Colors.blueAccent,borderRadius: BorderRadius.circular(8)),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal:8.0,vertical: 4),
-                              child: Text("More",style: GoogleFonts.happyMonkey(color: Colors.white,fontSize: 16),),
+                  subtitle:Focus(
+                    focusNode: myFocusNode,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text("${widget.videoCardDetails.subpara}",overflow:overflow,style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.046,fontWeight: FontWeight.w400),),
+                        overflow==TextOverflow.ellipsis?
+                        InkWell(
+                          onTap:(){
+                            setState(() {
+                              overflow=TextOverflow.visible;
+                              myFocusNode.requestFocus();
+                            });
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical:4.0),
+                            child: Container(
+                              decoration: BoxDecoration(color: Colors.blueAccent,borderRadius: BorderRadius.circular(8)),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal:8.0,vertical: 4),
+                                child: Text("More",style: GoogleFonts.happyMonkey(color: Colors.white,fontSize: 16),),
+                              ),
+                            ),
+                          ),
+                        ): InkWell(
+                          onTap:(){
+                            setState(() {
+                              overflow=TextOverflow.ellipsis;
+                              myFocusNode.unfocus();
+                            });
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical:4.0),
+                            child: Container(
+                              decoration: BoxDecoration(color: Colors.blueAccent,borderRadius: BorderRadius.circular(8)),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal:8.0,vertical: 4),
+                                child: Text("Collapse",style: GoogleFonts.happyMonkey(color: Colors.white,fontSize: 16),),
+                              ),
                             ),
                           ),
                         ),
-                      ): InkWell(
-                        onTap:(){
-                          setState(() {
-                            overflow=TextOverflow.ellipsis;
-                          });
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical:4.0),
-                          child: Container(
-                            decoration: BoxDecoration(color: Colors.blueAccent,borderRadius: BorderRadius.circular(8)),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal:8.0,vertical: 4),
-                              child: Text("Collapse",style: GoogleFonts.happyMonkey(color: Colors.white,fontSize: 16),),
-                            ),
-                          ),
+                        Row(
+                          children: <Widget>[
+                            Icon(Icons.favorite,size: 25.0,color: Colors.redAccent,),
+                            Text("${widget.videoCardDetails.likes}",style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.048,fontWeight: FontWeight.w600,),),
+                          ],
                         ),
-                      ),
-                      Row(
-                        children: <Widget>[
-                          Icon(Icons.favorite,size: 25.0,color: Colors.redAccent,),
-                          Text("${widget.videoCardDetails.likes}",style: GoogleFonts.happyMonkey(fontSize: MediaQuery.of(context).size.width*0.048,fontWeight: FontWeight.w600,),),
-                        ],
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               )
@@ -992,8 +1075,9 @@ class _VideoAppState extends State<VideoApp> {
 
 
 class Comments extends StatefulWidget {
-  final String comment;
-  Comments(this.comment);
+  final String comment,by;
+  final Timestamp time;
+  Comments(this.comment, this.by, this.time);
   @override
   _CommentsState createState() => _CommentsState();
 }
@@ -1002,18 +1086,18 @@ class _CommentsState extends State<Comments> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal:8.0,vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal:8.0),
       child: Container(
         width: MediaQuery.of(context).size.width,
-        alignment: widget.comment.toString().contains(loggedInEmail)?Alignment.topRight:Alignment.topLeft,
+        alignment: widget.by==loggedInEmail?Alignment.topRight:Alignment.topLeft,
         child: ConstrainedBox(
           constraints: BoxConstraints(
             maxWidth:MediaQuery.of(context).size.width*0.7,
           ),
           child: Card(
-            color: widget.comment.toString().contains(loggedInEmail)?Colors.blueAccent:Colors.black45,
+            color: widget.by==loggedInEmail?Colors.blueAccent:Colors.black45,
             shape: RoundedRectangleBorder(
-              borderRadius: widget.comment.toString().contains(loggedInEmail)?BorderRadius.only(topRight:Radius.circular(12),
+              borderRadius: widget.by==loggedInEmail?BorderRadius.only(topRight:Radius.circular(12),
               topLeft:Radius.circular(12),bottomLeft:Radius.circular(12)):
               BorderRadius.only(topRight:Radius.circular(12),
                   topLeft:Radius.circular(12),bottomRight:Radius.circular(12))
@@ -1021,9 +1105,10 @@ class _CommentsState extends State<Comments> {
             ),
             child: Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Row(
+              child: Column(
                 children: <Widget>[
-                  Expanded(child: Text("${widget.comment}",style: GoogleFonts.happyMonkey(color:Colors.white,fontSize: MediaQuery.of(context).size.width*0.045,fontWeight:FontWeight.w500),textAlign: TextAlign.left,)),
+                  Text("${widget.comment}",style: GoogleFonts.happyMonkey(color:Colors.white,fontSize: MediaQuery.of(context).size.width*0.045,fontWeight:FontWeight.w500),textAlign: TextAlign.left,),
+                  Text(widget.by,style: GoogleFonts.happyMonkey(color: Colors.white,fontSize: 10),textAlign: TextAlign.right,)
                 ],
               ),
             ),),
@@ -1077,7 +1162,7 @@ class _MyBottomNavigationBarState extends State<MyBottomNavigationBar> {
       StreamBuilder(
           stream: Firestore.instance.collection("users").document(loggedInEmail).snapshots(),
           builder: (context, snapshot) {
-            return snapshot.hasData?Social(snapshot.data['email'],snapshot.data['name'], snapshot.data['photoURL']):Center(child: Container(width:30,height: 30,child: CircularProgressIndicator(strokeWidth: 4,backgroundColor: Colors.white,)));
+            return snapshot.hasData?Social(userEmail:snapshot.data['email'],userName:snapshot.data['name'],img: snapshot.data['photoURL']):Center(child: Container(width:30,height: 30,child: CircularProgressIndicator(strokeWidth: 4,backgroundColor: Colors.white,)));
           }
       ),
       Profile(email: widget.username,rememberMe: widget.rememberMe,),

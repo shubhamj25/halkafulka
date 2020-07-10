@@ -3,7 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:halkaphulka1/home.dart';
+import 'package:halkaphulka1/notifications.dart';
 import 'package:halkaphulka1/profileImage.dart';
+import 'package:halkaphulka1/socialApp.dart';
 import 'package:progress_indicators/progress_indicators.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_player/video_player.dart';
@@ -130,7 +132,9 @@ class _ProfileState extends State<Profile> {
                                         heroTag: 294,
                                         child: Icon(Icons.person_add,size: 20,color: Colors.blueAccent,),
                                         onPressed: (){
-
+                                            Navigator.push(context, MaterialPageRoute(builder:(context){
+                                              return Social(userName:snapshot.data['name'],userEmail: snapshot.data['email'],currentIndex: 0,);
+                                            }));
                                         },
                                       ),
                                     ),
@@ -142,7 +146,9 @@ class _ProfileState extends State<Profile> {
                                         heroTag: 295,
                                         child: Icon(Icons.send,size: 20,),
                                         onPressed: (){
-
+                                          Navigator.push(context, MaterialPageRoute(builder:(context){
+                                            return Social(userName:snapshot.data['name'],userEmail: snapshot.data['email'],currentIndex: 3,);
+                                          }));
                                         },
                                       ),
                                     )
@@ -267,6 +273,16 @@ class _ProfileState extends State<Profile> {
                   ),
                 ):Center(child: CircularProgressIndicator(strokeWidth: 3,));
               }
+          ),
+          floatingActionButton: FloatingActionButton(
+            heroTag: 103895,
+            backgroundColor: deepRed,
+            child: Icon(Icons.notifications,color: Colors.white,),
+            onPressed: (){
+              Navigator.push(context, MaterialPageRoute(builder: (context){
+                return Notifications(userEmail: widget.email,);
+              }));
+            },
           ),
         ),
       ),
@@ -796,6 +812,7 @@ class _VideoGridTileState extends State<VideoGridTile> {
                                                       setState(() {
                                                         removingLiked=true;
                                                       });
+                                                      _controller.pause();
                                                       Firestore.instance.collection("allPosts").document(widget.videoCardDetails.id).updateData({"likes":widget.videoCardDetails.likes-1});
                                                       Firestore.instance.collection("favourites").document(loggedInEmail).collection("likedVideos").document(widget.videoCardDetails.id).delete().then((value) => Navigator.pop(context)).then((value){
                                                         setState(() {
@@ -942,6 +959,7 @@ class _VideoGridTileState extends State<VideoGridTile> {
                                                       setState(() {
                                                         removingPost=true;
                                                       });
+                                                      _controller.pause();
                                                       Firestore.instance.collection("allPosts").document(widget.videoCardDetails.id).delete().then((value) => Navigator.pop(context)).then((value){
                                                         setState(() {
                                                           removingPost=false;

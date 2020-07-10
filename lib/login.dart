@@ -19,6 +19,7 @@ import 'home.dart';
 
 
 Color transBlue=Color.fromARGB(155, 0, 0, 80);
+Color transGreen=Color.fromARGB(155, 0, 0, 40);
 bool _rememberMe = false;
 
 class Login extends StatefulWidget {
@@ -93,7 +94,9 @@ class _LoginState extends State<Login> {
                         Text("No Account Selected"),
                       ],
                     ),))).then((value){
-                      loggingin=false;
+                      setState(() {
+                        loggingin=false;
+                      });
                     });
 
                   },
@@ -214,10 +217,10 @@ class _LoginState extends State<Login> {
                     child: new DecoratedBox(
                         decoration: BoxDecoration(
                           image: DecorationImage(
-                            fit: BoxFit.fill,
+                            fit: BoxFit.cover,
                             image: AdvancedNetworkImage(
-                                "https://firebasestorage.googleapis.com/v0/b/halkafulka-221d3.appspot.com/o/forest.jpg?alt=media&token=a9501dab-0169-42bb-9af2-9e8e2b9b54fc"
-                                ,useDiskCache: true
+"https://firebasestorage.googleapis.com/v0/b/halkafulka-221d3.appspot.com/o/watch-tower.png?alt=media&token=a5f4b174-7c47-4b0c-a1b1-6a74c8e6dc3e",
+                            useDiskCache: true,
                             ),
                           ),
                         )
@@ -236,10 +239,20 @@ class _LoginState extends State<Login> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: <Widget>[
-                          SizedBox(height: MediaQuery.of(context).size.height*0.04),
                           Container(
                             width: 120,
                             height: 120,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  spreadRadius: 16.0,
+                                  blurRadius: 1000,
+                                  offset: Offset(2.0,2.0),
+                                  color: Colors.deepPurpleAccent
+                                )
+                              ]
+                            ),
                             child: CachedNetworkImage(
                               imageUrl: "https://firebasestorage.googleapis.com/v0/b/halkafulka-221d3.appspot.com/o/appicon.png?alt=media&token=1149b22a-aded-4a39-907e-f7df06aad868",
                               fadeInDuration: Duration(milliseconds: 500),
@@ -267,7 +280,7 @@ class _LoginState extends State<Login> {
 
                               Container(
                                 decoration: BoxDecoration(
-                                  color: Color.fromARGB(155, 0, 0, 80),
+                                  color: transGreen,
                                   borderRadius: BorderRadius.only(topRight: Radius.circular(8),topLeft: Radius.circular(8)),
                                 ),
                                 width: MediaQuery.of(context).size.width*0.75,
@@ -320,7 +333,7 @@ class _LoginState extends State<Login> {
                             children: <Widget>[
                               Container(
                                 decoration: BoxDecoration(
-                                  color: Color.fromARGB(155, 0, 0, 80),
+                                  color: transGreen,
                                 ),
                                 width: MediaQuery.of(context).size.width*0.75,
                                 alignment: Alignment.centerLeft,
@@ -375,7 +388,7 @@ class _LoginState extends State<Login> {
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal:6.0),
                             child: Material(
-                              color: transBlue,
+                              color: transGreen,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.only(topRight: Radius.circular(8),topLeft: Radius.circular(8)),
                               ),
@@ -499,7 +512,7 @@ class _LoginState extends State<Login> {
                               padding: EdgeInsets.only(left: 22.0),
                               child: Text(
                                 'Forgot Password?',
-                                style: GoogleFonts.happyMonkey(color: Colors.white,fontSize: 18),
+                                style: GoogleFonts.balooBhai(color: Colors.white,fontSize: 20),
                               ),
                             ),
                           ):Container(),
@@ -507,7 +520,7 @@ class _LoginState extends State<Login> {
                           Padding(
                             padding: const EdgeInsets.only(left:22.0),
                             child: Container(
-                              height: 20.0,
+                              height: 30.0,
                               alignment: Alignment.topCenter,
                               child: Row(
                                 children: <Widget>[
@@ -527,7 +540,7 @@ class _LoginState extends State<Login> {
                                   ),
                                   Text(
                                     'Remember me',
-                                    style: GoogleFonts.happyMonkey(color: Colors.white,fontSize: 18),
+                                    style: GoogleFonts.balooBhaina(color: Colors.white,fontSize: 20),
                                   ),
                                 ],
                               ),
